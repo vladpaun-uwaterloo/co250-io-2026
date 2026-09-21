@@ -6,6 +6,7 @@
 \usepackage{booktabs}
 \usepackage{enumitem}
 \usepackage{tikz}
+\usepackage{physics}
 \usetikzlibrary{arrows.meta,positioning}
 
 \setlength{\parindent}{0pt}
@@ -14,17 +15,6 @@
 \newcommand{\answersection}{%
     \subsection*{Answer}
     % Write your answer here.
-}
-
-\newenvironment{lp}{
-    \[
-    \begin{aligned}
-        \text{Objective:}\qquad & \\
-        & \\[0.5em]
-        \text{subject to:}\qquad &
-}{
-    \end{aligned}
-    \]
 }
 
 \title{CO250 Assignment 1}
@@ -66,7 +56,18 @@ the total production cost. Write an LP for this task.
 
 \answersection
 
+Let $s_i$ be the amount of maple syrup (in tons) in storage at the end of month $i$.\\
+Let $x_i$ be the amount of maple syrup produced in month $i$.
 
+\begin{align*}
+    \text{Objective:}\qquad
+        & \min \sum_{i=1}^{12} p_i x_i \\
+    \text{subject to:}\qquad
+        & s_i = s_{i-1} + x_i - d_i && \forall i\in [12] \\
+        & 0 \leq s_i \leq 15 && \forall i\in [12]\\
+        & s_0 = 7 \\
+        & x_i \geq 0 && \forall i\in [12].
+\end{align*}
 
 \subsection*{(b)}
 
@@ -103,7 +104,19 @@ The company wants to find a production schedule that minimizes the total cost in
 by production changes. Formulate the problem as an LP.
 
 \answersection
+Introduce auxiliary variables $y_i$ that, through constraints, will represent $y_i = \abs{x_i - x_{i+1}}$.
 
+\begin{align*}
+    \text{Objective:}\qquad
+        & \min \sum_{i=1}^{11} 50y_i \\
+    \text{subject to:}\qquad
+        & y_i \geq x_i - x_{i+1} && \forall i\in [11] \\
+        & y_i \geq x_{i+1} - x_i && \forall i\in [11] \\
+        & s_i = s_{i-1} + x_i - d_i && \forall i\in [12] \\
+        & 0 \leq s_i \leq 15 && \forall i\in [12]\\
+        & s_0 = 7 \\
+        & x_i \geq 0 && \forall i\in [12].
+\end{align*}
 
 \newpage
 \section*{Problem 2}
