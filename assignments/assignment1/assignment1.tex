@@ -228,16 +228,10 @@
     \draw[->,thick] (H) -- node[below right] {$20,500$} (T);
     \draw[->,thick] (T) -- node[above] {$10,1000$} (O);
     \end{tikzpicture}
-    \caption{Maple Syrup Madness Pipe Network for Problem 3. The numbers $10,500$ on the arc
-    connecting Waterloo to Guelph signal that it costs 10 cents to send a litre from Waterloo
-    to Guelph, and that it is possible to send up to 500 litres.}
+    \caption{Maple Syrup Madness Pipe Network for Problem 3. The numbers $10,500$ on the arc connecting Waterloo to Guelph signal that it costs 10 cents to send a litre from Waterloo to Guelph, and that it is possible to send up to 500 litres.}
     \end{figure}
 
-    Maple Syrup Madness has a plant in each of the cities of Waterloo, Guelph, Hamilton,
-    Toronto, and Oshawa. Maple Syrup Madness marketing team has proposed that selling maple
-    syrup for 100 cents in Oshawa may be a good idea for the company brand. To attend this
-    demand, the company will employ its remarkable pipe infrastructure connecting its plants
-    (see Figure 1). Namely:
+    Maple Syrup Madness has a plant in each of the cities of Waterloo, Guelph, Hamilton, Toronto, and Oshawa. Maple Syrup Madness marketing team has proposed that selling maple syrup for 100 cents in Oshawa may be a good idea for the company brand. To attend this demand, the company will employ its remarkable pipe infrastructure connecting its plants (see Figure 1). Namely:
 
     \begin{itemize}
         \item the Waterloo plant can send maple syrup to Guelph, Hamilton, and Toronto, at the
@@ -247,19 +241,36 @@
         \item the Toronto plant can send maple syrup to Oshawa at the cost of 10 cents per litre.
     \end{itemize}
 
-    The Waterloo plant has a total of 1000 litres of maple syrup that can be used in this publicity
-    stunt. But given the short window between when these litres are produced and when they
-    must be sold in Oshawa, the pipe capacities impose restrictions on how many litres can be
-    sent in each pipe. Each of the pipes listed above has a maximum capacity of 500 litres;
-    except the pipe between Guelph and Toronto, that can only be used to send 300 litres, and
-    the recently upgraded pipe between Toronto and Oshawa, which can be used to send
-    1000 litres.
+    The Waterloo plant has a total of 1000 litres of maple syrup that can be used in this publicity stunt. But given the short window between when these litres are produced and when they must be sold in Oshawa, the pipe capacities impose restrictions on how many litres can be sent in each pipe. Each of the pipes listed above has a maximum capacity of 500 litres; except the pipe between Guelph and Toronto, that can only be used to send 300 litres, and the recently upgraded pipe between Toronto and Oshawa, which can be used to send 1000 litres.
 
-    The company would like to know the maximum profit it can achieve from selling Waterloo's
-    maple syrup in Oshawa for 100 cents. Formulate an LP to solve that task.
+    The company would like to know the maximum profit it can achieve from selling Waterloo's maple syrup in Oshawa for 100 cents. Formulate an LP to solve that task.
 
     \begin{answer}
-        
+        Let $v_{xy}$ represent the liters of maple syrup sent from $x$ to $y$. So we have variables:
+        \begin{itemize}
+            \item $v_{wg}$ = litres sent from Waterloo to Guelph
+            \item $v_{wt}$ = litres sent from Waterloo to Toronto
+            \item $v_{wh}$ = litres sent from Waterloo to Hamilton
+            \item $v_{gt}$ = litres sent from Guelph to Toronto 
+            \item $v_{ht}$ = litres sent from Hamilton to Toronto
+            \item $v_{to}$ = litres sent from Toronto to Oshawa
+        \end{itemize}
+        \begin{align*}
+            \text{Objective:}\qquad
+                & \max 100 v_{to} - (10v_{wg} + 30 v_{wt} + 20 v_{wh} + 20 v_{gt} + 20 v_{ht} + 10 v_{to})\\
+            \text{subject to:}\qquad
+                & \sum_{x\in\{g,t,h\}}v_{wx} \leq 1000 \\
+                & v_{wg} \leq 500 \\
+                & v_{wt} \leq 500 \\
+                & v_{wh} \leq 500 \\
+                & v_{gt} \leq 300 \\ 
+                & v_{ht} \leq 500 \\
+                & v_{to} \leq 1000 \\
+                & v_{gt} = v_{wg}\\
+                & v_{ht} = v_{wh}\\
+                & v_{to} = v_{gt} + v_{wt} + v_{ht}\\
+                & v_{xy} \geq 0 && \forall x,y
+        \end{align*}
     \end{answer}
 \end{problem}
 
