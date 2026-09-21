@@ -147,29 +147,61 @@
 
 \begin{problem}
 
-    Consider the following word game. You are assigned a number of tiles, each containing letters
-    from the alphabet
+    Consider the following word game. You are assigned a number of tiles, each containing letters from the alphabet
     \[
     \Sigma=\{a,b,c,\ldots,z\}.
     \]
-    Suppose that your input contains $N_\alpha\in\mathbb{N}$ tiles with the letter $\alpha$
-    for each $\alpha\in\Sigma$. From the letters you are to construct any of the words
-    $w_1,\ldots,w_n$. This list might for example consist of all the words in a dictionary.
+    Suppose that your input contains $N_\alpha\in\mathbb{N}$ tiles with the letter $\alpha$ for each $\alpha\in\Sigma$. From the letters you are to construct any of the words $w_1,\ldots,w_n$. This list might for example consist of all the words in a dictionary.
 
-    You must construct any word at most once, and use any tile at most once. You receive
-    $v_j\ge 0$ points for constructing word $w_j$, and an additional bonus $b_{ij}\ge 0$
-    for making both words $w_i$ and $w_j$.
+    You must construct any word at most once, and use any tile at most once. You receive $v_j\ge 0$ points for constructing word $w_j$, and an additional bonus $b_{ij}\ge 0$ for making both words $w_i$ and $w_j$.
 
     \begin{parts}
-        \Needspace{8\baselineskip}\item Formulate an integer program to determine your optimal choice of words (one that maximizes
-        the total number of points + bonus).
+        \Needspace{8\baselineskip}\item Formulate an integer program to determine your optimal choice of words (one that maximizes the total number of points + bonus).
         \begin{answer}
-            
+            Let 
+            \[
+                x_j = 
+                \begin{cases}
+                    1 & \text{if we construct word }w_j \\ 
+                    0 & \text{else}
+                \end{cases}
+            \]
+
+            Let
+            \[
+                y_{ij} = 
+                \begin{cases}
+                    1 & \text{if we construct both words }w_i \text{ and }w_j\\
+                    0 & \text{else}
+                \end{cases}
+            \]
+
+            Let $a_{\alpha j}$ be the amount of times letter $\alpha$ appears in word $w_j$
+            \begin{align*}
+                \text{Objective:}\qquad
+                    & \max \sum_{j\in[n]}v_jx_j + \sum_{1\leq i<j\leq n} b_{ij}y_{ij}\\
+                \text{subject to:}\qquad
+                    & y_{ij} \leq x_i\\
+                    & y_{ij} \leq x_j\\
+                    & y_{ij} \geq x_i + x_j - 1\\
+                    & \sum_{j\in[n]}a_{\alpha j}x_j \leq N_\alpha&& \forall \alpha \in \Sigma\\
+                    & x_j \in \{0,1\} && \forall j\in[n]\\
+                    & y_{ij} \in \{0,1\} && \forall 1\leq i < j \leq n\\ 
+            \end{align*}
         \end{answer}
-        \Needspace{8\baselineskip}\item How does your formulation change when you are allowed to select 100 tiles with no
-        restriction on your choice of letters?
+        \Needspace{8\baselineskip}\item How does your formulation change when you are allowed to select 100 tiles with no restriction on your choice of letters?
         \begin{answer}
-            
+            \begin{align*}
+                \text{Objective:}\qquad
+                    & \max \sum_{j\in[n]}v_jx_j + \sum_{1\leq i<j\leq n} b_{ij}y_{ij}\\
+                \text{subject to:}\qquad
+                    & y_{ij} \leq x_i\\
+                    & y_{ij} \leq x_j\\
+                    & y_{ij} \geq x_i + x_j - 1\\
+                    & \sum_{\alpha\in \Sigma}\sum_{j\in[n]}a_{\alpha j}x_j \leq 100 \\
+                    & x_j \in \{0,1\} && \forall j\in[n]\\
+                    & y_{ij} \in \{0,1\} && \forall 1\leq i < j \leq n\\ 
+            \end{align*}
         \end{answer}
     \end{parts}
 \end{problem}
