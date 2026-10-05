@@ -1,0 +1,207 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{physics}
+\usepackage{needspace}
+\usepackage{xcolor}
+\definecolor{courseblue}{RGB}{0,90,150}
+\usetikzlibrary{arrows.meta,positioning}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.75em}
+
+\newcounter{problem}
+\newenvironment{problem}{%
+    \refstepcounter{problem}%
+    \Needspace{7\baselineskip}%
+    \par\vspace{0.7em}%
+    \noindent\textcolor{courseblue}{\rule{\textwidth}{0.4pt}}%
+    \par\vspace{0.5em}%
+    \begin{list}{}{%
+        \setlength{\leftmargin}{2.3em}%
+        \setlength{\labelwidth}{1.8em}%
+        \setlength{\labelsep}{0.5em}%
+        \setlength{\topsep}{0pt}%
+        \setlength{\partopsep}{0pt}%
+    }%
+    \item[{[\theproblem]}]
+}{%
+    \end{list}
+    \par\vspace{0.5em}
+}
+
+\newenvironment{parts}{%
+    \begin{enumerate}[label={[\alph*]},leftmargin=2.2em,itemsep=0.65em,topsep=0.65em]
+}{%
+    \end{enumerate}
+}
+
+% Type each solution between \begin{answer} and \end{answer}.
+\newenvironment{answer}{%
+    \Needspace{4\baselineskip}%
+    \par\vspace{0.35em}
+    \noindent\textbf{Answer:}\par
+}{%
+    \par\vspace{0.25em}
+}
+
+
+
+\title{CO250 Assignment 3}
+\author{}
+\date{September 28--October 5}
+
+\begin{document}
+\maketitle
+
+\begin{problem}
+    For each of the following linear programs determine whether it is \textbf{infeasible}, \textbf{unbounded}, or
+    if it has an \textbf{optimal point}. In each case, justify your answer (e.g.\ with a certificate that the
+    linear program has this property).
+
+    \begin{parts}
+        \Needspace{12\baselineskip}\item
+        \[
+        \begin{aligned}
+            \min_{x_1,x_2}\quad & x_1+2x_2 \\
+            \text{s.t.}\quad & -x_1\leq 0, \\
+            & -x_2\leq 0, \\
+            & -x_1-x_2\leq -1.
+        \end{aligned}
+        \]
+        \begin{answer}
+            Unbounded. Take $\bar{x} = (1,1)$ and $d = (1,1)$.
+        \end{answer}
+
+        \Needspace{13\baselineskip}\item Consider
+        \[
+        \begin{aligned}
+            \min_{x_1,x_2}\quad & -x_1-x_2 \\
+            \text{s.t.}\quad & x_1\leq 2, \\
+            & x_2\leq 3, \\
+            & -x_1\leq 0, \\
+            & -x_2\leq 0.
+        \end{aligned}
+        \]
+        \begin{answer}
+
+        \end{answer}
+
+        \Needspace{11\baselineskip}\item
+        \[
+        \begin{aligned}
+            \min_{x_1,x_2}\quad & -x_1+x_2 \\
+            \text{s.t.}\quad & -x_1\leq 0, \\
+            & -x_2\leq 0.
+        \end{aligned}
+        \]
+        \begin{answer}
+
+        \end{answer}
+
+        \Needspace{11\baselineskip}\item
+        \[
+        \begin{aligned}
+            \min_{x_1,x_2}\quad & x_1+x_2 \\
+            \text{s.t.}\quad & x_1\leq 0, \\
+            & -x_1\leq -1.
+        \end{aligned}
+        \]
+        \begin{answer}
+
+        \end{answer}
+    \end{parts}
+\end{problem}
+
+\begin{problem}
+    A company has a set $J$ of jobs to be assigned to a set $I$ of employees. Employee $i\in I$ needs $c_{ij}$
+    hours to complete job $j\in J$. The company wants to complete all jobs by assigning exactly one
+    job to each employee, while minimizing the total number of hours spent to complete all jobs.
+    For this reason, the company has formulated the following IP:
+    \[
+    \begin{gathered}
+        \min \sum_{i\in I}\sum_{j\in J}c_{ij}x_{ij} \\[0.5em]
+        \begin{aligned}
+            \sum_{i\in I}x_{ij} &= 1 && \forall j\in J \\
+            \sum_{j\in J}x_{ij} &= 1 && \forall i\in I
+        \end{aligned} \\[0.5em]
+        x\geq\mathbf{0},\text{ integer}
+    \end{gathered}
+    \]
+
+    Consider the LP obtained by the above IP after ignoring the integrality constraints, that is:
+    \[
+    \begin{gathered}
+        \min \sum_{i\in I}\sum_{j\in J}c_{ij}x_{ij} \\[0.5em]
+        \begin{aligned}
+            \sum_{i\in I}x_{ij} &= 1 && \forall j\in J \\
+            \sum_{j\in J}x_{ij} &= 1 && \forall i\in I
+        \end{aligned} \\[0.5em]
+        x\geq\mathbf{0},
+    \end{gathered}
+    \]
+
+    Show that the above LP is feasible (i.e., that it admits at least one feasible solution) if and
+    only if $|I|=|J|$.
+
+    \textbf{Note:} to show that the LP is feasible, you need to provide one feasible solution. To show that
+    the LP is infeasible, provide a certificate of infeasibility as in Proposition 2.1 (p.\ 46) in the
+    textbook.
+    \begin{answer}
+
+    \end{answer}
+\end{problem}
+
+\Needspace{22\baselineskip}
+\begin{problem}
+    \begin{parts}
+        \Needspace{16\baselineskip}\item Here is a linear program
+        \[
+        \begin{aligned}
+            \text{minimize}\quad & 3x_1+2x_2+x_3 \\
+            \text{subject to}\quad & x_1+x_2+x_3\leq 8, \\
+            & 2x_1-x_2+x_3\geq 2, \\
+            & x_1+3x_2-x_3\leq 10, \\
+            & -x_1+x_2+2x_3\geq 1.\quad x_1,x_2,2x_3\geq 0.
+        \end{aligned}
+        \]
+        % The source prints x_1, x_2, 2x_3 >= 0; preserved verbatim.
+        Write an equivalent linear program in standard equality form.
+        \begin{answer}
+
+        \end{answer}
+
+        \Needspace{17\baselineskip}\item Consider the following matrix (where the top row just numbers the columns).
+        \[
+        A=\bordermatrix{
+            & 1 & 2 & 3 & 4 & 5 \cr
+            & 1 & 0 & 1 & 2 & 1 \cr
+            & 0 & 1 & 1 & 1 & 2 \cr
+            & 0 & 0 & 0 & 1 & 1 \cr
+        }.
+        \]
+        which of the following sets of columns are bases of this matrix?
+        \[
+            \{1,2,5\},\ \{1,2\},\ \{1,2,3\},\ \{1,3,5\}
+        \]
+        \begin{answer}
+
+        \end{answer}
+
+        \Needspace{13\baselineskip}\item Consider the same matrix as in (b) in the equation
+        \[
+            Ax=\begin{pmatrix}1\\2\\3\end{pmatrix}.
+        \]
+        Put this linear equation in canonical form, using the basis $\{1,2,4\}$.
+        \begin{answer}
+
+        \end{answer}
+    \end{parts}
+\end{problem}
+
+\end{document}
