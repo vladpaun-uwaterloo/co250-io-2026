@@ -120,9 +120,46 @@ def to_sef(lp: LinearProgram) -> SEFLinearProgram:
         objective_offset=objective_offset,
     )
 
-def canonicalize(lp: SEFLinearProgram) -> SEFLinearProgram:
+def to_normalized_sef(lp: LinearProgram) -> SEFLinearProgram:
+    sef_lp = to_sef(lp)
 
-    return lp
+    for index, rhs in enumerate(list(sef_lp.b)):
+        if rhs < 0:
+            sef_lp.b[index] *= -1
+            sef_lp.A[index,:] *= -1
+    
+    return sef_lp
+
+
+def canonicalize(lp: SEFLinearProgram, basis: Basis) -> tuple[SEFLinearProgram, Basis]:
+    A = lp.A.copy()
+    b = lp.b.copy()
+    c = lp.c.copy()
+
+    indices = list(basis.indices)
+
+    A_B = A[:,indices]
+    c_B = c[indices]
+
+    # Canonicalize constraints:
+    # A_bar = A_B^-1 A
+    # b_bar = A_B^-1 b
+    A_bar = np.linalg.solve(A_B,A)
+    b_bar = np.linalg.solve(A_B,b)
+
+    y = np.linalg.solve(A_B.T, c_B)
+
+    c_bar = c - A.T @ y
+
+    objective_offset = (lp.objective_offset + float(b @ y))
+
+    lp = SEFLinearProgram(
+        c_bar,
+        A_bar,
+        b_bar,
+        objective_offset
+    )
+    return lp, basis
 
 def build_aux(lp: SEFLinearProgram) -> tuple[SEFLinearProgram, Basis]:
     m, n = lp.A.shape
