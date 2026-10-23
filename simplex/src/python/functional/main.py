@@ -1,11 +1,11 @@
 from models import LinearProgram, SEFLinearProgram
-from simplex import solve
+from solver import solve
 
 def main():
     # Parse arguments
     # Get problem
     lp = "parse shit"
-    result = solve(lp)
+    # result = solve(lp)
     # Output
     return
 
