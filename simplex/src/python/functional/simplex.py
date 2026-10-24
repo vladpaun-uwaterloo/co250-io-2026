@@ -31,7 +31,7 @@ def simplex(lp: SEFLinearProgram, basis: Basis) -> OptimalResult |  UnboundedRes
             return _generate_optimal_cert(original_lp, lp,basis,bfs)
 
 
-        indices = [i for i, ci in enumerate(c) if ci > 0]
+        indices = [i for i, ci in enumerate(c) if ci > TOL]
 
         k = indices[0]
 
@@ -48,12 +48,11 @@ def simplex(lp: SEFLinearProgram, basis: Basis) -> OptimalResult |  UnboundedRes
         new_basis[r] = k
         basis = Basis(tuple(new_basis))
 
+# This assumes a normalized LP
 def phase_one(lp: SEFLinearProgram) -> InfeasibleResult | tuple[SEFLinearProgram, Basis]:
-    A = lp.A.copy()
-    b = lp.b.copy()
-    c = lp.c.copy()
-    n = A.shape[1]
+    
     # Build Auxiliary
+    assert np.all(lp.b > 0)
     aux_lp, init_aux_basis = build_aux(lp)
 
     # Run Simplex on Aux
@@ -65,8 +64,52 @@ def phase_one(lp: SEFLinearProgram) -> InfeasibleResult | tuple[SEFLinearProgram
     return _remove_artificials(lp, aux_lp, result.basis)
 
 def _remove_artificials(lp: SEFLinearProgram, aux_lp: SEFLinearProgram, aux_basis: Basis) -> tuple[SEFLinearProgram, Basis]:
-    # TODO
-    return (aux_lp, aux_basis)
+
+    # n = lp.A.shape[1]
+    # aux_lp, basis = canonicalize(aux_lp, aux_basis)
+
+    # while True:
+    #     basis_indices = list(basis.indices)
+
+    #     # Artificial variables have indices n, n+1, ...
+    #     artificial_row = next(
+    #         (
+    #             r
+    #             for r, j in enumerate(basis_indices)
+    #             if j >= n
+    #         ),
+    #         None,
+    #     )
+
+    #     # No artificial variables remain in the basis.
+    #     if artificial_row is None:
+    #         return lp, basis
+
+    #     r = artificial_row
+
+    #     basic = set(basis_indices)
+    #     k = next(
+    #         (
+    #             j
+    #             for j in range(n)
+    #             if j not in basic
+    #             and abs(aux_lp.A[r, j]) > TOL
+    #         ),
+    #         None,
+    #     )
+
+    #     if k is None:
+    #         raise NotImplementedError(
+    #             "Redundant constraint encountered during Phase I cleanup."
+    #         )
+
+    #     # Degenerate pivot:
+    #     # artificial variable leaves, original variable enters.
+    #     basis_indices[r] = k
+    #     basis = Basis(tuple(basis_indices))
+
+    #     # Recanonicalize with respect to the new basis.
+    #     aux_lp, basis = canonicalize(aux_lp, basis)
 
 def _generate_optimal_cert(original_lp: SEFLinearProgram, canonical_lp: SEFLinearProgram, basis: Basis, bfs: np.ndarray) -> OptimalResult:
     indices = list(basis.indices)
