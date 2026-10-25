@@ -1,0 +1,264 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{physics}
+\usepackage{needspace}
+\usepackage{xcolor}
+\definecolor{courseblue}{RGB}{0,90,150}
+\usetikzlibrary{arrows.meta,positioning}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.75em}
+
+\newcounter{problem}
+\newenvironment{problem}{%
+    \refstepcounter{problem}%
+    \Needspace{7\baselineskip}%
+    \par\vspace{0.7em}%
+    \noindent\textcolor{courseblue}{\rule{\textwidth}{0.4pt}}%
+    \par\vspace{0.5em}%
+    \begin{list}{}{%
+        \setlength{\leftmargin}{2.3em}%
+        \setlength{\labelwidth}{1.8em}%
+        \setlength{\labelsep}{0.5em}%
+        \setlength{\topsep}{0pt}%
+        \setlength{\partopsep}{0pt}%
+    }%
+    \item[{[\theproblem]}]
+}{%
+    \end{list}
+    \par\vspace{0.5em}
+}
+
+\newenvironment{parts}{%
+    \begin{enumerate}[label={[\alph*]},leftmargin=2.2em,itemsep=0.65em,topsep=0.65em]
+}{%
+    \end{enumerate}
+}
+
+% Type each solution between \begin{answer} and \end{answer}.
+\newenvironment{answer}{%
+    \Needspace{4\baselineskip}%
+    \par\vspace{0.35em}
+    \noindent\textbf{Answer:}\par
+}{%
+    \par\vspace{0.25em}
+}
+
+
+
+\title{CO250 Assignment 4}
+\author{}
+\date{October 5--19}
+
+\begin{document}
+\maketitle
+
+\begin{problem}
+    The following LP is in SEF:
+    \begin{equation}
+    \begin{aligned}
+        \max\quad & (1,-2,0,1,3)x \\
+        \text{subject to}\quad &
+        \begin{pmatrix}1&-1&2&-1&0\\2&0&1&-1&1\end{pmatrix}x
+        =\begin{pmatrix}1\\-1\end{pmatrix} \\
+        & x\geq\mathbf{0}
+    \end{aligned}
+    \end{equation}
+    Find an equivalent LP in canonical form for:
+    \begin{parts}
+        \item the basis $\{1,4\}$,
+        \begin{answer}
+
+        \end{answer}
+        \item the basis $\{3,5\}$.
+        \begin{answer}
+
+        \end{answer}
+    \end{parts}
+    In each case, state whether the basis (i.e.\ the corresponding basic feasible solution) is feasible.
+\end{problem}
+
+\begin{problem}
+    Consider the following parameterized linear program in standard equality form, where $\alpha\in\mathbb{R}$:
+    \begin{equation*}
+    \begin{aligned}
+        \max\quad & x_4 \\
+        \text{s.t.}\quad & -x_1+x_3=1, \\
+        & x_2+\alpha x_3+x_4=0, \\
+        & x_1,x_2,x_3,x_4\geq 0.
+    \end{aligned}
+    \tag{$P_\alpha$}
+    \end{equation*}
+    \begin{parts}
+        \item Find a certificate of infeasibility of $(P_\alpha)$ for $\alpha=1$.
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{7\baselineskip}\item Find a certificate of unboundedness of $(P_\alpha)$ for $\alpha=-1$.
+        \begin{answer}
+
+        \end{answer}
+        \item Determine all values of $\alpha$ for which $(P_\alpha)$ is infeasible. Provide a certificate of infeasibility for each such $\alpha$.
+        \begin{answer}
+
+        \end{answer}
+        \item Determine all values of $\alpha$ for which $(P_\alpha)$ is unbounded. Provide a certificate of unboundedness for each such $\alpha$.
+        \begin{answer}
+
+        \end{answer}
+        \item For any remaining feasible values of $\alpha$, find an optimal solution $\bar{x}$ and a certificate for the optimality of $\bar{x}$.
+        \begin{answer}
+
+        \end{answer}
+    \end{parts}
+\end{problem}
+
+\begin{problem}
+    In this exercise, you will work through a guided application of the simplex method to an LP.
+    You do not need to have learned all the details of the algorithm in order to complete the exercise.
+
+    Consider the following LP
+    \[
+    \begin{aligned}
+        \max\quad & (1\quad 1\quad 0\quad 0)x \\
+        \text{s.t.}\quad &
+        \begin{pmatrix}2&-1&1&0\\1&-2&0&1\end{pmatrix}x
+        =\begin{pmatrix}1\\1\end{pmatrix} \\
+        & x\geq\mathbf{0}.
+    \end{aligned}
+    \]
+    \begin{parts}
+        \item Let $\bar{x}$ be the basic feasible solution with basis $\{3,4\}$. What is $\bar{x}$?
+        \begin{answer}
+
+        \end{answer}
+        \item Explain why $\bar{x}$ is not an optimal solution.
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{14\baselineskip}\item Let $x^{(\alpha)}$ be the solution to
+        \[
+            \begin{pmatrix}2&-1&1&0\\1&-2&0&1\end{pmatrix}x
+            =\begin{pmatrix}1\\1\end{pmatrix}
+        \]
+        such that $x_1^{(\alpha)}=\alpha$ and $x_2^{(\alpha)}=0$.
+        Determine the set
+        \[
+            \mathcal{A}=\{\alpha:x^{(\alpha)}\text{ is a feasible solution}\}.
+        \]
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{9\baselineskip}\item Let $\alpha^*$ be the maximum value of $\alpha$ in $\mathcal{A}$ (from part (c) you should see that the maximum exists).
+        Show that $x^{(\alpha^*)}$ is a basic feasible solution whose objective value is greater than that for $\bar{x}$.
+        What is the basis for $x^{(\alpha^*)}$?
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{15\baselineskip}\item Redo part (c) but swapping the role of $x_1$ and $x_2$. Let $x^{(\alpha)}$ be the solution to
+        \[
+            \begin{pmatrix}2&-1&1&0\\1&-2&0&1\end{pmatrix}x
+            =\begin{pmatrix}1\\1\end{pmatrix}
+        \]
+        such that $x_1^{(\alpha)}=0$ and $x_2^{(\alpha)}=\alpha$.
+        Determine the set
+        \[
+            \mathcal{B}=\{\alpha:x^{(\alpha)}\text{ is a feasible solution}\}.
+        \]
+        What does $\mathcal{B}$ imply about the three possible outcomes of this LP?
+        \begin{answer}
+
+        \end{answer}
+    \end{parts}
+\end{problem}
+
+\begin{problem}
+    Consider the following linear program in standard equality form:
+    \begin{equation*}
+    \begin{aligned}
+        \min\quad & x_4 \\
+        \text{s.t.}\quad & x_1+x_2+x_3=3, \\
+        & x_1+2x_2+3x_3+x_4=6, \\
+        & x_1,x_2,x_3,x_4\geq 0.
+    \end{aligned}
+    \tag{P}
+    \end{equation*}
+    In matrix form, the constraints are $Ax=b$, $x\geq 0$, where
+    \[
+        A=\begin{pmatrix}1&1&1&0\\1&2&3&1\end{pmatrix},
+        \qquad b=\begin{pmatrix}3\\6\end{pmatrix}.
+    \]
+    Let $\bar{x}$ be a feasible solution given by $(1\ 1\ 1\ 0)^T$.
+    Let $J=\{1,2,3\}$ be the set of indices corresponding to the positive coordinates of $\bar{x}$.
+    \begin{parts}
+        \Needspace{10\baselineskip}\item Find a nonzero vector $d\in\mathbb{R}^4$ such that
+        \[
+            Ad=0
+        \]
+        and $d$ is supported on $J$. That is, $d_j=0$ for every $j\notin J$.
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{11\baselineskip}\item For $\alpha\in\mathbb{R}$, define
+        \[
+            x^{(\alpha)}=\bar{x}+\alpha d.
+        \]
+        Show that $Ax^{(\alpha)}=b$ for every $\alpha\in\mathbb{R}$.
+        Determine $\mathcal{A}$, the set of all values of $\alpha$ for which $x^{(\alpha)}$ is feasible.
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{10\baselineskip}\item Choose $\alpha^*$ to be either $\max\{\alpha:\alpha\in\mathcal{A}\}$ or $\min\{\alpha:\alpha\in\mathcal{A}\}$, whichever exists.
+        Compute the resulting feasible solution $x^*=x^{(\alpha^*)}$ and compare the number of its positive coordinates with that of $\bar{x}$.
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{15\baselineskip}\item Prove that every feasible LP in SEF has a basic feasible solution by generalising the above arguments as follows.
+        Consider LP: $\max\{c^Tx:Ax=b,x\geq\mathbf{0}\}$.
+        Let $\bar{x}$ be a feasible solution with minimum number of positive entries.
+        Let $J$ be the set of indices corresponding to the positive coordinates of $\bar{x}$.
+        Following the guidance below to show that $\{A_j:j\in J\}$ is linearly independent.
+        \begin{enumerate}[label={(\roman*)},leftmargin=2.5em,itemsep=0.65em,topsep=0.65em]
+            \item Suppose on the contrary that $\{A_j:j\in J\}$ is not linearly independent.
+            Show that there exists a nonzero $d$ supported on $J$ such that $Ad=0$.
+            \begin{answer}
+
+            \end{answer}
+            \item Explain why without loss of generality we may assume that $d_j<0$ for some $j\in J$.
+            \begin{answer}
+
+            \end{answer}
+            \Needspace{10\baselineskip}\item For $\alpha\in\mathbb{R}$, define
+            \[
+                x^{(\alpha)}=\bar{x}+\alpha d.
+            \]
+            Show that $Ax^{(\alpha)}=b$ for every $\alpha\in\mathbb{R}$.
+            \begin{answer}
+
+            \end{answer}
+            \item Let $\mathcal{A}$ be the set of all values of $\alpha$ for which $x^{(\alpha)}$ is feasible.
+            Show that $\mathcal{A}$ has a maximum.
+            \begin{answer}
+
+            \end{answer}
+            \Needspace{9\baselineskip}\item Let $\alpha^*$ be the maximum of $\mathcal{A}$ and let $x^*=x^{(\alpha^*)}$.
+            Show that the number of positive coordinates in $x^*$ is smaller than $|J|$.
+            \begin{answer}
+
+            \end{answer}
+            \item Conclude that $\{A_j:j\in J\}$ is linear independent.
+            Explain why $\bar{x}$ is a basic feasible solution.
+            \begin{answer}
+
+            \end{answer}
+        \end{enumerate}
+    \end{parts}
+\end{problem}
+
+\end{document}

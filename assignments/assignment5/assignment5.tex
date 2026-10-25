@@ -1,0 +1,209 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{physics}
+\usepackage{needspace}
+\usepackage{xcolor}
+\definecolor{courseblue}{RGB}{0,90,150}
+\usetikzlibrary{arrows.meta,positioning}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.75em}
+
+\newcounter{problem}
+\newenvironment{problem}{%
+    \refstepcounter{problem}%
+    \Needspace{7\baselineskip}%
+    \par\vspace{0.7em}%
+    \noindent\textcolor{courseblue}{\rule{\textwidth}{0.4pt}}%
+    \par\vspace{0.5em}%
+    \begin{list}{}{%
+        \setlength{\leftmargin}{2.3em}%
+        \setlength{\labelwidth}{1.8em}%
+        \setlength{\labelsep}{0.5em}%
+        \setlength{\topsep}{0pt}%
+        \setlength{\partopsep}{0pt}%
+    }%
+    \item[{[\theproblem]}]
+}{%
+    \end{list}
+    \par\vspace{0.5em}
+}
+
+\newenvironment{parts}{%
+    \begin{enumerate}[label={[\alph*]},leftmargin=2.2em,itemsep=0.65em,topsep=0.65em]
+}{%
+    \end{enumerate}
+}
+
+% Type each solution between \begin{answer} and \end{answer}.
+\newenvironment{answer}{%
+    \Needspace{4\baselineskip}%
+    \par\vspace{0.35em}
+    \noindent\textbf{Answer:}\par
+}{%
+    \par\vspace{0.25em}
+}
+
+
+
+\title{CO250 Assignment 5}
+\author{}
+\date{October 19--November 2}
+
+\begin{document}
+\maketitle
+
+\begin{problem}
+    Consider the linear program
+    \begin{equation*}
+    \begin{aligned}
+        \max\quad & x_4 \\
+        \text{s.t.}\quad & x_1-x_3=1, \\
+        & x_2-x_3=-2, \\
+        & x_1-x_2-x_3-x_4=1, \\
+        & x_1,x_2,x_3,x_4\geq 0.
+    \end{aligned}
+    \tag{P}
+    \end{equation*}
+    Equivalently, $P$ has the form
+    \[
+        \max\{c^Tx:Ax=b,\ x\geq\mathbf{0}\},
+    \]
+    where
+    \[
+        A=\begin{bmatrix}1&0&-1&0\\0&1&-1&0\\1&-1&-1&-1\end{bmatrix},
+        \qquad b=\begin{bmatrix}1\\-2\\1\end{bmatrix},
+        \qquad c=\begin{bmatrix}0\\0\\0\\1\end{bmatrix}.
+    \]
+    \begin{parts}
+        \Needspace{7\baselineskip}\item Write down the auxiliary LP for (P).
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{10\baselineskip}\item Run the first phase of Simplex method for solving (P).
+        Apply Bland's rule whenever there are multiple choices for an entering or leaving variable.
+        (The Bland's rule says that if there are multiple variables that could enter or leave the basis,
+        always choose the one with the smallest index.)
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{8\baselineskip}\item Explain how to obtain a feasible basis for the second phase of the simplex method for solving (P).
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{10\baselineskip}\item There are other ways of constructing an auxiliary LP.
+        Find an auxiliary LP for (P) that has different objective function and/or different constraints from the one in part (a).
+        Briefly explain how to determine the feasibility of (P) by solving the new auxiliary LP.
+        \begin{answer}
+
+        \end{answer}
+    \end{parts}
+\end{problem}
+
+\begin{problem}
+    In this question we study a restricted family of LP's whose feasible region is given only by
+    linear equations, without the non-negativity constraint we usually have in SEF.
+    For a matrix $A\in\mathbb{R}^{m\times n}$, the \emph{kernel} $\ker(A)$ of $A$ is defined by
+    $\ker(A)=\{x\in\mathbb{R}^n:Ax=0\}$. Consider the LP
+    \begin{equation}
+    \begin{aligned}
+        \max\quad & c^Tx \\
+        \text{subject to}\quad &
+        \begin{pmatrix}2&-3&-4\\1&5&11\end{pmatrix}x
+        =\begin{pmatrix}-5\\17\end{pmatrix},
+    \end{aligned}
+    \label{eq:restricted-lp}
+    \end{equation}
+    which features in assignment 3, question 1b, with $c=(-1,-1,-1)^T$.
+    % The source's reference to assignment 3, question 1b is preserved verbatim.
+    \begin{parts}
+        \Needspace{12\baselineskip}\item Show that
+        \[
+            \begin{pmatrix}2&-3&-4\\1&5&11\end{pmatrix}d=0
+            \text{ if and only if }
+            d=t\begin{pmatrix}1\\2\\-1\end{pmatrix}
+            \text{ for some }t\in\mathbb{R}.
+        \]
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{8\baselineskip}\item Show that if $c\in\mathbb{R}^3$ is such that $c^T(1,2,-1)\neq 0$, then the LP \eqref{eq:restricted-lp} is unbounded.
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{8\baselineskip}\item Show that if the LP \eqref{eq:restricted-lp} is unbounded, then $c^T(1,2,-1)\neq 0$.
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{9\baselineskip}\item Consider an LP of the form $\max\{c^Tx:Ax=b\}$, which we assume to be feasible.
+        Prove that LP has an optimal solution if and only if $c$ is orthogonal to every vector in $\ker(A)$.
+        \begin{answer}
+
+        \end{answer}
+    \end{parts}
+\end{problem}
+
+\Needspace{16\baselineskip}
+\begin{problem}
+    Consider the hyperplanes in $\mathbb{R}^3$
+    \[
+        H_1:\ x+y+z=2,\qquad H_2:\ x-y+z=1.
+    \]
+    \begin{parts}
+        \Needspace{7\baselineskip}\item Find a normal vector to each hyperplane.
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{7\baselineskip}\item Determine the acute angle between the two hyperplanes. Show your calculation.
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{14\baselineskip}\item Consider the polyhedron
+        \[
+            P=\left\{(x,y,z)\in\mathbb{R}^3:
+            \begin{aligned}
+                x+y+z&\leq 2,\\
+                x-y+z&\leq 1,\\
+                x,y,z&\geq 0
+            \end{aligned}\right\}.
+        \]
+        Explain why $P$ is a polyhedron, and identify the half-spaces defining $P$.
+        \begin{answer}
+
+        \end{answer}
+        \Needspace{8\baselineskip}\item Replace the inequality $x-y+z\leq 1$ by $x-y+z>1$.
+        Does $P$ remain a polyhedron? Justify your answer.
+        \begin{answer}
+
+        \end{answer}
+    \end{parts}
+\end{problem}
+
+\Needspace{23\baselineskip}
+\begin{problem}
+    For points $x^1,x^2$ in $\mathbb{R}^n$ we define
+    \[
+        L_{x^1,x^2}=\{\lambda x^1+(1-\lambda)x^2:0\leq\lambda\leq 1\}
+    \]
+    to be the \emph{line segment} connecting $x^1$ and $x^2$.
+    We then say that a set $S\subseteq\mathbb{R}^n$ is a \emph{convex} if for every pair of points
+    $x^1\in S$ and $x^2\in S$ the line segment $L_{x^1,x^2}$ is fully contained in $S$.
+
+    Let $x_1,x_2,x_3\in\mathbb{R}^n$ be three given vectors. Show that the set
+    \[
+        \Delta=\left\{\sum_{i=1}^3\mu_i x_i:
+        \mu_i\geq 0\text{ for all }i,\sum_{i=1}^3\mu_i=1\right\}
+    \]
+    is convex. Use \underline{only} the above definition of convexity!
+    \begin{answer}
+
+    \end{answer}
+\end{problem}
+
+\end{document}
