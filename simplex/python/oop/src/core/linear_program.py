@@ -20,6 +20,48 @@ class ConstraintSense(Enum):
     GE = auto()
 
 
+class VariableTransformKind(Enum):
+    LOWER_SHIFT = auto()
+    UPPER_SHIFT = auto()
+    FREE = auto()
+
+
+@dataclass
+class VariableTransformation:
+    kind: VariableTransformKind
+    indices: tuple[int, ...]
+    upper_bound_row: int = -1
+
+
+@dataclass
+class SEFTransformation:
+    variable_offset: np.ndarray
+    variable_matrix: np.ndarray
+    variable_transformations: list[VariableTransformation]
+
+    transformed_variable_count: int
+    original_constraint_count: int
+
+    # The SEF objective is:
+    #
+    # objective_multiplier * original objective
+    #
+    # MAX -> +1
+    # MIN -> -1
+    objective_multiplier: float
+
+    def map_solution_to_original(self, solution: np.ndarray) -> np.ndarray:
+        z = solution[:self.transformed_variable_count]
+        return self.variable_offset + self.variable_matrix @ z
+
+    def map_direction_to_original(self, direction: np.ndarray) -> np.ndarray:
+        z_direction = direction[:self.transformed_variable_count]
+        return self.variable_matrix @ z_direction
+
+    def map_objective_value_to_original(self, objective_value: float) -> float:
+        return self.objective_multiplier * objective_value
+
+
 @dataclass
 class LinearProgram:
     c: np.ndarray
@@ -34,112 +76,162 @@ class LinearProgram:
 
     objective_offset: float = 0.0
 
-    def to_sef(self) -> SEFLinearProgram:
-        A = self.A.copy()
-        b = self.b.copy()
-        c = self.c.copy()
+    def to_sef(self) -> tuple[SEFLinearProgram, SEFTransformation]:
+        n = len(self.c)
 
-        objective_offset = self.objective_offset
-        constraint_senses = list(self.constraint_senses)
+        variable_offset = np.zeros(n)
+        transform_columns = []
+        variable_transformations = []
 
-        # 1. Convert objective to maximization
-        if self.objective_sense == ObjectiveSense.MIN:
-            c *= -1
-            objective_offset *= -1
-
-        # 2. Convert all variables to nonnegative variables
-        new_columns = []
-        new_c = []
-
-        # Additional constraints created by finite upper bounds:
-        # (variable_index, upper_bound)
+        # (original variable index, transformed variable index, bound)
         upper_bound_constraints = []
 
+        # Build:
+        #
+        # x_original = variable_offset + variable_matrix @ z
+        #
+        # where z >= 0.
         for j, (lower_bound, upper_bound) in enumerate(zip(self.lower_bounds, self.upper_bounds)):
-            column = A[:, j]
-            coefficient = c[j]
+            e_j = np.zeros(n)
+            e_j[j] = 1.0
 
             # Case 1:
-            # L <= x or L <= x <= U
             #
-            # Substitute:
-            # x = L + x'
-            # x' >= 0
+            # L <= x
+            #
+            # x = L + z
+            #
+            # If U is also finite:
+            #
+            # z <= U - L
             if np.isfinite(lower_bound):
-                b -= column * lower_bound
-                objective_offset += lower_bound * coefficient
+                variable_offset[j] = lower_bound
 
-                new_c.append(coefficient)
-                new_columns.append(column)
+                transformed_index = len(transform_columns)
+                transform_columns.append(e_j)
+
+                transformation = VariableTransformation(
+                    kind=VariableTransformKind.LOWER_SHIFT,
+                    indices=(transformed_index,),
+                )
+
+                variable_transformations.append(transformation)
 
                 if np.isfinite(upper_bound):
-                    upper_bound_constraints.append((len(new_columns) - 1, upper_bound - lower_bound))
+                    upper_bound_constraints.append((j, transformed_index, upper_bound - lower_bound))
 
             # Case 2:
-            # -inf < x <= U
             #
-            # Substitute:
-            # x = U - x'
-            # x' >= 0
+            # x <= U
+            #
+            # x = U - z
             elif np.isfinite(upper_bound):
-                b -= column * upper_bound
-                objective_offset += upper_bound * coefficient
+                variable_offset[j] = upper_bound
 
-                new_c.append(-coefficient)
-                new_columns.append(-column)
+                transformed_index = len(transform_columns)
+                transform_columns.append(-e_j)
+
+                variable_transformations.append(
+                    VariableTransformation(
+                        kind=VariableTransformKind.UPPER_SHIFT,
+                        indices=(transformed_index,),
+                    )
+                )
 
             # Case 3:
+            #
             # x is free
             #
-            # x = x+ - x-
-            # x+, x- >= 0
+            # x = z+ - z-
             else:
-                new_c.append(coefficient)
-                new_c.append(-coefficient)
+                positive_index = len(transform_columns)
+                transform_columns.append(e_j)
 
-                new_columns.append(column)
-                new_columns.append(-column)
+                negative_index = len(transform_columns)
+                transform_columns.append(-e_j)
 
-        A = np.column_stack(new_columns)
-        c = np.array(new_c, dtype=float)
+                variable_transformations.append(
+                    VariableTransformation(
+                        kind=VariableTransformKind.FREE,
+                        indices=(positive_index, negative_index),
+                    )
+                )
 
-        # 3. Add constraints created by finite upper bounds
-        for variable_index, bound in upper_bound_constraints:
+        variable_matrix = np.column_stack(transform_columns)
+
+        # Apply x = q + Tz:
+        #
+        # A(q + Tz) = b
+        #
+        # ATz = b - Aq
+        A = self.A @ variable_matrix
+        b = self.b - self.A @ variable_offset
+
+        # Objective:
+        #
+        # c^T(q + Tz) + offset
+        #
+        # = (T^T c)^T z + c^T q + offset
+        objective_multiplier = 1.0 if self.objective_sense == ObjectiveSense.MAX else -1.0
+
+        c = objective_multiplier * (variable_matrix.T @ self.c)
+        objective_offset = objective_multiplier * (self.objective_offset + float(self.c @ variable_offset))
+
+        constraint_senses = list(self.constraint_senses)
+
+        # Add constraints created by variables with both a finite lower
+        # bound and finite upper bound.
+        for original_variable, transformed_variable, bound in upper_bound_constraints:
+            row_index = A.shape[0]
+
             row = np.zeros(A.shape[1])
-            row[variable_index] = 1
+            row[transformed_variable] = 1.0
 
             A = np.vstack((A, row))
             b = np.append(b, bound)
 
             constraint_senses.append(ConstraintSense.LE)
 
-        # 4. Convert all inequalities to equalities
+            variable_transformations[original_variable].upper_bound_row = row_index
+
+        # Convert inequalities to equalities.
         #
         # <= : Ax + s = b
         # >= : Ax - s = b
         #  = : unchanged
-        num = sum(sense != ConstraintSense.EQ for sense in constraint_senses)
+        num_slack_variables = sum(sense != ConstraintSense.EQ for sense in constraint_senses)
 
-        if num > 0:
-            slack_columns = np.zeros((A.shape[0], num))
+        if num_slack_variables > 0:
+            slack_columns = np.zeros((A.shape[0], num_slack_variables))
 
             index = 0
             for row, sense in enumerate(constraint_senses):
                 if sense == ConstraintSense.EQ:
                     continue
 
-                slack_columns[row, index] = 1 if sense == ConstraintSense.LE else -1
+                slack_columns[row, index] = 1.0 if sense == ConstraintSense.LE else -1.0
                 index += 1
 
             A = np.hstack((A, slack_columns))
-            c = np.append(c, np.zeros(num))
+            c = np.append(c, np.zeros(num_slack_variables))
 
-        return SEFLinearProgram(
+        sef_lp = SEFLinearProgram(
             c=c,
             A=A,
             b=b,
             objective_offset=objective_offset,
         )
+
+        transformation = SEFTransformation(
+            variable_offset=variable_offset,
+            variable_matrix=variable_matrix,
+            variable_transformations=variable_transformations,
+            transformed_variable_count=variable_matrix.shape[1],
+            original_constraint_count=len(self.constraint_senses),
+            objective_multiplier=objective_multiplier,
+        )
+
+        return sef_lp, transformation
 
 
 @dataclass
@@ -171,28 +263,20 @@ class SEFLinearProgram:
             if self.b[i] < 0:
                 self.A[i, :] *= -1
                 self.b[i] *= -1
-
-                # Apply the same row operation to R
                 self._row_transform[i, :] *= -1
 
         return self
 
     def canonicalize(self, basis: Basis) -> Self:
-
         A_B = self.A[:, basis.indices]
         c_B = self.c[basis.indices]
 
-        # A_bar = A_B^-1 A
-        # b_bar = A_B^-1 b
         A_bar = np.linalg.solve(A_B, self.A)
         b_bar = np.linalg.solve(A_B, self.b)
 
-        # Apply exactly the same row operations to R
         row_transform_bar = np.linalg.solve(A_B, self._row_transform)
 
-        # Solve A_B^T y = c_B
         y = np.linalg.solve(A_B.T, c_B)
-
         c_bar = self.c - self.A.T @ y
 
         self.objective_offset += float(self.b @ y)
@@ -217,7 +301,6 @@ class SEFLinearProgram:
             objective_offset=0.0,
         )
 
-        # The auxiliary LP starts from the same current row representation
         aux_lp._row_transform = self._row_transform.copy()
 
         basis = Basis(range(n, n + m))
@@ -225,7 +308,6 @@ class SEFLinearProgram:
         return aux_lp, basis
 
     def remove_constraint(self, row: int) -> Self:
-
         self.A = np.delete(self.A, row, axis=0)
         self.b = np.delete(self.b, row)
         self._row_transform = np.delete(self._row_transform, row, axis=0)
@@ -240,10 +322,4 @@ class SEFLinearProgram:
         return self
 
     def map_certificate_to_original(self, certificate: np.ndarray) -> np.ndarray:
-        # If A_current = R A_original, then
-        #
-        # A_current^T y
-        # = A_original^T R^T y
-        #
-        # so the original certificate is R^T y.
         return self._row_transform.T @ certificate
