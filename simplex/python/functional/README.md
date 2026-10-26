@@ -4,15 +4,15 @@ A small functional implementation of the simplex method written as a learning ex
 
 The implementation intentionally focuses only on linear programs already written in **standard equality form (SEF)**:
 
-\[
+$$
 \max c^Tx+c_0
-\]
+$$
 
 subject to
 
-\[
+$$
 Ax=b,\qquad x\ge0.
-\]
+$$
 
 The more complete object-oriented implementation in `../oop/` supports general LP input and performs the transformations to SEF automatically.
 
