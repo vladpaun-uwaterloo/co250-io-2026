@@ -1,13 +1,15 @@
-from models import LinearProgram, SEFLinearProgram
+from parser import parse_args, build_lp
 from solver import solve
 
+
 def main():
-    # Parse arguments
-    # Get problem
-    lp = "parse shit"
-    # result = solve(lp)
-    # Output
-    return
+    args = parse_args()
+    lp = build_lp(args)
+
+    result = solve(lp)
+
+    print(result)
+
 
 if __name__ == "__main__":
     main()
