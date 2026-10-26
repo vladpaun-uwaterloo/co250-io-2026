@@ -20,34 +20,64 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Simplex Solver")
-        self.resize(1000, 800)
+        self.resize(1250, 760)
+        self.setMinimumSize(950, 650)
 
         self.sef_input = SEFInputWidget()
         self.general_input = GeneralLPInputWidget()
         self.result_view = ResultView()
 
-        self.sef_input.solve_requested.connect(self._solve_sef)
+        self.sef_input.solve_requested.connect(
+            self._solve_sef
+        )
 
         tabs = QTabWidget()
-        tabs.addTab(self.sef_input, "Standard Equality Form")
-        tabs.addTab(self.general_input, "General LP")
+        tabs.addTab(
+            self.sef_input,
+            "Standard Equality Form",
+        )
+        tabs.addTab(
+            self.general_input,
+            "General LP",
+        )
 
-        splitter = QSplitter(Qt.Orientation.Vertical)
+        splitter = QSplitter(
+            Qt.Orientation.Horizontal
+        )
+
         splitter.addWidget(tabs)
         splitter.addWidget(self.result_view)
 
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 2)
 
+        splitter.setSizes([
+            780,
+            420,
+        ])
+
+        splitter.setChildrenCollapsible(False)
+
+        self.result_view.setMinimumWidth(320)
+
         central = QWidget()
-        layout = QVBoxLayout(central)
-        layout.addWidget(splitter)
+
+        main_layout = QVBoxLayout(central)
+        main_layout.setContentsMargins(
+            12,
+            12,
+            12,
+            12,
+        )
+
+        main_layout.addWidget(splitter)
 
         self.setCentralWidget(central)
 
     def _solve_sef(self, lp):
         try:
             result = solve(lp)
+
         except Exception as exc:
             QMessageBox.critical(
                 self,

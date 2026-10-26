@@ -21,20 +21,22 @@ class ResultView(QGroupBox):
     def __init__(self):
         super().__init__("Result")
 
-        self.result_layout = QVBoxLayout(
-            self
+        self.result_layout = QVBoxLayout(self)
+
+        self.result_layout.setContentsMargins(
+            16,
+            20,
+            16,
+            16,
         )
+
+        self.result_layout.setSpacing(12)
 
         self._show_placeholder()
 
     def clear(self):
-        while (
-            self.result_layout.count()
-            > 0
-        ):
-            item = self.result_layout.takeAt(
-                0
-            )
+        while self.result_layout.count() > 0:
+            item = self.result_layout.takeAt(0)
 
             if item is None:
                 continue
@@ -68,7 +70,7 @@ class ResultView(QGroupBox):
         else:
             self.result_layout.addWidget(
                 QLabel(
-                    "Unknown result type: "
+                    f"Unknown result type: "
                     f"{type(result).__name__}"
                 )
             )
@@ -79,15 +81,35 @@ class ResultView(QGroupBox):
         self,
         result: OptimalResult,
     ):
-        self._add_status(
-            "OPTIMAL"
+        self._add_status("OPTIMAL")
+
+        value_title = QLabel(
+            "Objective value"
+        )
+
+        value_title.setObjectName(
+            "secondaryLabel"
         )
 
         self.result_layout.addWidget(
-            QLabel(
-                "Objective value: "
-                f"{self._format_number(result.objective_value)}"
+            value_title
+        )
+
+        value = QLabel(
+            self._format_number(
+                result.objective_value
             )
+        )
+
+        font = value.font()
+        font.setPointSize(
+            font.pointSize() + 5
+        )
+        font.setBold(True)
+        value.setFont(font)
+
+        self.result_layout.addWidget(
+            value
         )
 
         self._add_vector(
@@ -96,15 +118,22 @@ class ResultView(QGroupBox):
             "x",
         )
 
+        title = QLabel("Basis")
+        title.setObjectName(
+            "secondaryLabel"
+        )
+
+        self.result_layout.addWidget(
+            title
+        )
+
         basis_names = ", ".join(
             f"x{i + 1}"
             for i in result.basis.indices
         )
 
         self.result_layout.addWidget(
-            QLabel(
-                f"Basis: {basis_names}"
-            )
+            QLabel(basis_names)
         )
 
         self._add_vector(
@@ -153,13 +182,9 @@ class ResultView(QGroupBox):
     ):
         label = QLabel(text)
 
-        font = label.font()
-        font.setPointSize(
-            font.pointSize() + 3
+        label.setObjectName(
+            "statusLabel"
         )
-        font.setBold(True)
-
-        label.setFont(font)
 
         self.result_layout.addWidget(
             label
@@ -175,8 +200,14 @@ class ResultView(QGroupBox):
             values
         ).reshape(-1)
 
+        label = QLabel(title)
+
+        label.setObjectName(
+            "secondaryLabel"
+        )
+
         self.result_layout.addWidget(
-            QLabel(title)
+            label
         )
 
         table = QTableWidget(
@@ -184,30 +215,43 @@ class ResultView(QGroupBox):
             len(values),
         )
 
+        table.verticalHeader().setVisible(
+            False
+        )
+
         table.setHorizontalHeaderLabels(
             [
                 f"{prefix}{i + 1}"
-                for i in range(
-                    len(values)
-                )
+                for i in range(len(values))
             ]
         )
 
-        table.verticalHeader().setVisible(
-            False
+        table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
+
+        table.horizontalHeader().setFixedHeight(
+            30
+        )
+
+        table.setRowHeight(
+            0,
+            34,
         )
 
         for i, value in enumerate(
             values
         ):
+            item = QTableWidgetItem(
+                self._format_number(
+                    value
+                )
+            )
+
             table.setItem(
                 0,
                 i,
-                QTableWidgetItem(
-                    self._format_number(
-                        value
-                    )
-                ),
+                item,
             )
 
         table.setEditTriggers(
@@ -218,22 +262,38 @@ class ResultView(QGroupBox):
             QAbstractItemView.SelectionMode.NoSelection
         )
 
-        table.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
-        )
-
-        table.setMaximumHeight(90)
+        table.setFixedHeight(72)
 
         self.result_layout.addWidget(
             table
         )
 
     def _show_placeholder(self):
+        title = QLabel(
+            "No result yet"
+        )
+
+        title.setObjectName(
+            "statusLabel"
+        )
+
         self.result_layout.addWidget(
-            QLabel(
-                "Enter an SEF problem "
-                "and press Solve."
-            )
+            title
+        )
+
+        description = QLabel(
+            "Enter a standard equality form "
+            "problem and press Solve."
+        )
+
+        description.setObjectName(
+            "secondaryLabel"
+        )
+
+        description.setWordWrap(True)
+
+        self.result_layout.addWidget(
+            description
         )
 
         self.result_layout.addStretch()

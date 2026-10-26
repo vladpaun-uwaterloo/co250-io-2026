@@ -4,7 +4,6 @@ from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
-    QFormLayout,
     QLabel,
     QSpinBox,
     QLineEdit,
@@ -13,6 +12,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QHeaderView,
     QGroupBox,
+    QSizePolicy,
 )
 
 from core.models import (
@@ -29,89 +29,161 @@ class GeneralLPInputWidget(QWidget):
         self.variable_count = QSpinBox()
         self.variable_count.setRange(1, 100)
         self.variable_count.setValue(2)
+        self.variable_count.setFixedWidth(90)
 
         self.constraint_count = QSpinBox()
         self.constraint_count.setRange(1, 100)
         self.constraint_count.setValue(2)
+        self.constraint_count.setFixedWidth(90)
 
         self.objective_sense = QComboBox()
         self.objective_sense.addItems(["MAX", "MIN"])
+        self.objective_sense.setFixedWidth(100)
 
         self.objective_table = QTableWidget()
         self.constraint_table = QTableWidget()
         self.bounds_table = QTableWidget()
 
         self.offset_input = QLineEdit("0")
+        self.offset_input.setFixedWidth(140)
 
+        self._configure_tables()
         self._build_ui()
 
         self.variable_count.valueChanged.connect(
-            lambda _: self._resize_tables()
+            self._resize_tables
         )
 
         self.constraint_count.valueChanged.connect(
-            lambda _: self._resize_tables()
+            self._resize_tables
         )
 
         self._resize_tables()
 
+    def _configure_tables(self):
+        self.objective_table.verticalHeader().setVisible(
+            False
+        )
+
+        self.objective_table.setFixedHeight(76)
+
+        self.objective_table.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
+
+        self.objective_table.horizontalHeader().setFixedHeight(
+            32
+        )
+
+        self.constraint_table.horizontalHeader().setFixedHeight(
+            32
+        )
+
+        self.constraint_table.verticalHeader().setDefaultSectionSize(
+            34
+        )
+
+        self.constraint_table.setAlternatingRowColors(
+            True
+        )
+
+        self.bounds_table.horizontalHeader().setFixedHeight(
+            32
+        )
+
+        self.bounds_table.verticalHeader().setDefaultSectionSize(
+            34
+        )
+
+        self.bounds_table.setAlternatingRowColors(
+            True
+        )
+
     def _build_ui(self):
         main_layout = QVBoxLayout(self)
 
+        main_layout.setContentsMargins(
+            18,
+            18,
+            18,
+            18,
+        )
+
+        main_layout.setSpacing(14)
+
         # Problem size
-        dimensions_group = QGroupBox("Problem Size")
-        dimensions_layout = QFormLayout(dimensions_group)
-
-        dimensions_layout.addRow(
-            "Variables:",
-            self.variable_count,
+        size_group = QGroupBox(
+            "Problem Size"
         )
 
-        dimensions_layout.addRow(
-            "Constraints:",
-            self.constraint_count,
+        size_layout = QHBoxLayout(
+            size_group
         )
 
-        main_layout.addWidget(dimensions_group)
+        size_layout.addWidget(
+            QLabel("Variables")
+        )
+
+        size_layout.addWidget(
+            self.variable_count
+        )
+
+        size_layout.addSpacing(20)
+
+        size_layout.addWidget(
+            QLabel("Constraints")
+        )
+
+        size_layout.addWidget(
+            self.constraint_count
+        )
+
+        size_layout.addStretch()
+
+        main_layout.addWidget(
+            size_group
+        )
 
         # Objective
-        objective_group = QGroupBox("Objective")
-        objective_layout = QVBoxLayout(objective_group)
-
-        objective_options = QHBoxLayout()
-
-        objective_options.addWidget(
-            QLabel("Sense:")
+        objective_group = QGroupBox(
+            "Objective"
         )
 
-        objective_options.addWidget(
+        objective_layout = QVBoxLayout(
+            objective_group
+        )
+
+        objective_layout.setSpacing(8)
+
+        top_row = QHBoxLayout()
+
+        top_row.addWidget(
+            QLabel("Sense")
+        )
+
+        top_row.addWidget(
             self.objective_sense
         )
 
-        objective_options.addStretch()
+        top_row.addSpacing(20)
+
+        top_row.addWidget(
+            QLabel("Offset")
+        )
+
+        top_row.addWidget(
+            self.offset_input
+        )
+
+        top_row.addStretch()
 
         objective_layout.addLayout(
-            objective_options
+            top_row
         )
 
         objective_layout.addWidget(
             self.objective_table
-        )
-
-        offset_layout = QHBoxLayout()
-
-        offset_layout.addWidget(
-            QLabel("Objective offset:")
-        )
-
-        offset_layout.addWidget(
-            self.offset_input
-        )
-
-        offset_layout.addStretch()
-
-        objective_layout.addLayout(
-            offset_layout
         )
 
         main_layout.addWidget(
@@ -125,6 +197,20 @@ class GeneralLPInputWidget(QWidget):
 
         constraints_layout = QVBoxLayout(
             constraints_group
+        )
+
+        constraints_layout.setSpacing(8)
+
+        description = QLabel(
+            "Each row represents one linear constraint."
+        )
+
+        description.setObjectName(
+            "secondaryLabel"
+        )
+
+        constraints_layout.addWidget(
+            description
         )
 
         constraints_layout.addWidget(
@@ -144,10 +230,18 @@ class GeneralLPInputWidget(QWidget):
             bounds_group
         )
 
+        bounds_layout.setSpacing(8)
+
+        description = QLabel(
+            'Use numbers, "inf", or "-inf".'
+        )
+
+        description.setObjectName(
+            "secondaryLabel"
+        )
+
         bounds_layout.addWidget(
-            QLabel(
-                'Bounds may use numbers, "inf", or "-inf".'
-            )
+            description
         )
 
         bounds_layout.addWidget(
@@ -159,13 +253,16 @@ class GeneralLPInputWidget(QWidget):
         )
 
         info = QLabel(
-            "General LP input is available, "
-            "but solving is not connected yet."
+            "General LP solving is not connected yet."
         )
 
-        info.setWordWrap(True)
+        info.setObjectName(
+            "secondaryLabel"
+        )
 
         main_layout.addWidget(info)
+
+        main_layout.addStretch()
 
     def _resize_tables(self):
         old_n = self.objective_table.columnCount()
@@ -197,17 +294,24 @@ class GeneralLPInputWidget(QWidget):
         old_senses = []
 
         for i in range(old_m):
-            widget = self.constraint_table.cellWidget(
-                i,
-                old_n,
+            widget = (
+                self.constraint_table.cellWidget(
+                    i,
+                    old_n,
+                )
             )
 
-            if isinstance(widget, QComboBox):
+            if isinstance(
+                widget,
+                QComboBox,
+            ):
                 old_senses.append(
                     widget.currentText()
                 )
             else:
-                old_senses.append("LE")
+                old_senses.append(
+                    "LE"
+                )
 
         old_b = []
 
@@ -248,19 +352,20 @@ class GeneralLPInputWidget(QWidget):
         n = self.variable_count.value()
         m = self.constraint_count.value()
 
-        # Objective table
-        self.objective_table.setRowCount(1)
-        self.objective_table.setColumnCount(n)
+        # Objective
+        self.objective_table.setRowCount(
+            1
+        )
+
+        self.objective_table.setColumnCount(
+            n
+        )
 
         self.objective_table.setHorizontalHeaderLabels(
             [
                 f"x{j + 1}"
                 for j in range(n)
             ]
-        )
-
-        self.objective_table.setVerticalHeaderLabels(
-            ["c"]
         )
 
         for j in range(n):
@@ -273,15 +378,25 @@ class GeneralLPInputWidget(QWidget):
             self.objective_table.setItem(
                 0,
                 j,
-                QTableWidgetItem(value),
+                QTableWidgetItem(
+                    value
+                ),
             )
+
+        self.objective_table.setRowHeight(
+            0,
+            34,
+        )
 
         self.objective_table.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.Stretch
         )
 
-        # Constraint table
-        self.constraint_table.setRowCount(m)
+        # Constraints
+        self.constraint_table.setRowCount(
+            m
+        )
+
         self.constraint_table.setColumnCount(
             n + 2
         )
@@ -309,16 +424,22 @@ class GeneralLPInputWidget(QWidget):
             for j in range(n):
                 value = "0"
 
-                if i < old_m and j < old_n:
+                if (
+                    i < old_m
+                    and j < old_n
+                ):
                     value = old_A[i][j]
 
                 self.constraint_table.setItem(
                     i,
                     j,
-                    QTableWidgetItem(value),
+                    QTableWidgetItem(
+                        value
+                    ),
                 )
 
             sense_box = QComboBox()
+
             sense_box.addItems(
                 ["LE", "EQ", "GE"]
             )
@@ -343,16 +464,34 @@ class GeneralLPInputWidget(QWidget):
             self.constraint_table.setItem(
                 i,
                 n + 1,
-                QTableWidgetItem(rhs),
+                QTableWidgetItem(
+                    rhs
+                ),
             )
 
         self.constraint_table.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.Stretch
         )
 
-        # Bounds table
-        self.bounds_table.setRowCount(n)
-        self.bounds_table.setColumnCount(2)
+        visible_rows = min(
+            m,
+            7,
+        )
+
+        self.constraint_table.setFixedHeight(
+            32
+            + visible_rows * 34
+            + 8
+        )
+
+        # Bounds
+        self.bounds_table.setRowCount(
+            n
+        )
+
+        self.bounds_table.setColumnCount(
+            2
+        )
 
         self.bounds_table.setHorizontalHeaderLabels(
             ["Lower", "Upper"]
@@ -367,24 +506,42 @@ class GeneralLPInputWidget(QWidget):
 
         for j in range(n):
             if j < len(old_bounds):
-                lower, upper = old_bounds[j]
+                lower, upper = (
+                    old_bounds[j]
+                )
             else:
-                lower, upper = "0", "inf"
+                lower = "0"
+                upper = "inf"
 
             self.bounds_table.setItem(
                 j,
                 0,
-                QTableWidgetItem(lower),
+                QTableWidgetItem(
+                    lower
+                ),
             )
 
             self.bounds_table.setItem(
                 j,
                 1,
-                QTableWidgetItem(upper),
+                QTableWidgetItem(
+                    upper
+                ),
             )
 
         self.bounds_table.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.Stretch
+        )
+
+        visible_bounds = min(
+            n,
+            5,
+        )
+
+        self.bounds_table.setFixedHeight(
+            32
+            + visible_bounds * 34
+            + 8
         )
 
     def get_lp(self) -> LinearProgram:
@@ -465,18 +622,22 @@ class GeneralLPInputWidget(QWidget):
         )
 
         for j in range(n):
-            lower_bounds[j] = self._read_bound(
-                self.bounds_table,
-                j,
-                0,
-                f"lower bound of x{j + 1}",
+            lower_bounds[j] = (
+                self._read_bound(
+                    self.bounds_table,
+                    j,
+                    0,
+                    f"lower bound of x{j + 1}",
+                )
             )
 
-            upper_bounds[j] = self._read_bound(
-                self.bounds_table,
-                j,
-                1,
-                f"upper bound of x{j + 1}",
+            upper_bounds[j] = (
+                self._read_bound(
+                    self.bounds_table,
+                    j,
+                    1,
+                    f"upper bound of x{j + 1}",
+                )
             )
 
             if (
@@ -492,6 +653,7 @@ class GeneralLPInputWidget(QWidget):
             objective_offset = float(
                 self.offset_input.text().strip()
             )
+
         except ValueError:
             raise ValueError(
                 "Objective offset must be a number."
@@ -526,6 +688,7 @@ class GeneralLPInputWidget(QWidget):
         column: int,
         default: str,
     ) -> str:
+
         item = table.item(
             row,
             column,
@@ -536,7 +699,11 @@ class GeneralLPInputWidget(QWidget):
 
         value = item.text().strip()
 
-        return value if value else default
+        return (
+            value
+            if value
+            else default
+        )
 
     @classmethod
     def _read_finite(
@@ -546,6 +713,7 @@ class GeneralLPInputWidget(QWidget):
         column: int,
         name: str,
     ) -> float:
+
         text = cls._cell_text(
             table,
             row,
@@ -555,6 +723,7 @@ class GeneralLPInputWidget(QWidget):
 
         try:
             value = float(text)
+
         except ValueError:
             raise ValueError(
                 f"{name} must be a number."
@@ -575,6 +744,7 @@ class GeneralLPInputWidget(QWidget):
         column: int,
         name: str,
     ) -> float:
+
         text = cls._cell_text(
             table,
             row,
@@ -583,8 +753,12 @@ class GeneralLPInputWidget(QWidget):
         )
 
         normalized = (
-            text.lower()
-            .replace("∞", "inf")
+            text
+            .lower()
+            .replace(
+                "∞",
+                "inf",
+            )
         )
 
         if normalized in {
@@ -597,7 +771,10 @@ class GeneralLPInputWidget(QWidget):
             return -np.inf
 
         try:
-            return float(normalized)
+            return float(
+                normalized
+            )
+
         except ValueError:
             raise ValueError(
                 f"{name} must be a number, "
