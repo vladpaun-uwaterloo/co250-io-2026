@@ -121,14 +121,27 @@ def to_sef(lp: LinearProgram) -> SEFLinearProgram:
     )
 
 def normalize(lp: SEFLinearProgram) -> tuple[SEFLinearProgram, list[int]]:
-    flipped = []
-    for index, rhs in enumerate(list(lp.b)):
-        if rhs < 0:
-            lp.b[index] *= -1
-            lp.A[index,:] *= -1
-            flipped.append(index)
-        
-    return lp, flipped
+
+    A = lp.A.copy()
+    b = lp.b.copy()
+
+    flipped_rows = []
+
+    for i in range(len(b)):
+        if b[i] < 0:
+            A[i, :] *= -1
+            b[i] *= -1
+
+            flipped_rows.append(i)
+
+    normalized_lp = SEFLinearProgram(
+        c=lp.c.copy(),
+        A=A,
+        b=b,
+        objective_offset=lp.objective_offset,
+    )
+
+    return normalized_lp, flipped_rows
 
 
 def canonicalize(lp: SEFLinearProgram, basis: Basis) -> tuple[SEFLinearProgram, Basis]:
