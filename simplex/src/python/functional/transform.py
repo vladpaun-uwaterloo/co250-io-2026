@@ -120,15 +120,15 @@ def to_sef(lp: LinearProgram) -> SEFLinearProgram:
         objective_offset=objective_offset,
     )
 
-def to_normalized_sef(lp: LinearProgram) -> SEFLinearProgram:
-    sef_lp = to_sef(lp)
-
-    for index, rhs in enumerate(list(sef_lp.b)):
+def normalize(lp: SEFLinearProgram) -> tuple[SEFLinearProgram, list[int]]:
+    flipped = []
+    for index, rhs in enumerate(list(lp.b)):
         if rhs < 0:
-            sef_lp.b[index] *= -1
-            sef_lp.A[index,:] *= -1
-    
-    return sef_lp
+            lp.b[index] *= -1
+            lp.A[index,:] *= -1
+            flipped.append(index)
+        
+    return lp, flipped
 
 
 def canonicalize(lp: SEFLinearProgram, basis: Basis) -> tuple[SEFLinearProgram, Basis]:

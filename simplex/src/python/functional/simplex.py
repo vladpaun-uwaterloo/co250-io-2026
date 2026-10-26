@@ -1,6 +1,6 @@
 from models import SEFLinearProgram, OptimalResult, InfeasibleResult, UnboundedResult, Basis
 import numpy as np
-from transform import build_aux, canonicalize
+from transform import build_aux, canonicalize, normalize
 
 TOL = 1e-9
 
@@ -12,47 +12,48 @@ def simplex(lp: SEFLinearProgram, basis: Basis) -> OptimalResult |  UnboundedRes
         b=lp.b.copy(),
         objective_offset=lp.objective_offset,
     )
+    basis_indices = list(basis.indices)
 
     while True:
+        basis = Basis(tuple(basis_indices))
         lp, basis = canonicalize(lp, basis)
+        basis_indices = list(basis.indices)
 
         m,n = lp.A.shape
 
-        A = lp.A.copy()
-        b = lp.b.copy()
-        c = lp.c.copy()
-
-        basis_indices = basis.indices
-
         bfs = np.zeros(n)
-        bfs[list(basis_indices)] = b
+        bfs[list(basis_indices)] = lp.b
 
-        if np.all(c <= TOL):
+        if np.all(lp.c <= TOL):
             return _generate_optimal_cert(original_lp, lp,basis,bfs)
 
 
-        indices = [i for i, ci in enumerate(c) if ci > TOL]
+        entering = next(
+            i
+            for i, ci in enumerate(lp.c)
+            if ci > TOL and i not in basis_indices
+        )
 
-        k = indices[0]
-
-        if np.all(A[:, k] <= TOL):
-            return _generate_unbounded_cert(lp, basis, bfs, k)
+        if np.all(lp.A[:, entering] <= TOL):
+            return _generate_unbounded_cert(lp, basis, bfs, entering)
         
         ts = []
-        for i in range(b.shape[0]):
-            if A[i,k] > 0:
-                ts.append((i,b[i] / A[i,k]))
-        r,t = min(ts, key=lambda x: x[1])
+        for i in range(m):
+            if lp.A[i,entering] > TOL:
+                ts.append((i,lp.b[i] / lp.A[i,entering]))
 
-        new_basis = list(basis_indices)
-        new_basis[r] = k
-        basis = Basis(tuple(new_basis))
+        min_t = min(t for _,t in ts)
+        leaving_candidates = [i for i,t in ts if abs(t - min_t) <= TOL]
 
-# This assumes a normalized LP
+        leaving = min(leaving_candidates, key=lambda i: basis_indices[i])
+        basis_indices[leaving] = entering
+
 def phase_one(lp: SEFLinearProgram) -> InfeasibleResult | tuple[SEFLinearProgram, Basis]:
+
+    # normalize
+    lp, flipped_rows = normalize(lp)
     
     # Build Auxiliary
-    assert np.all(lp.b > 0)
     aux_lp, init_aux_basis = build_aux(lp)
 
     # Run Simplex on Aux
@@ -60,56 +61,64 @@ def phase_one(lp: SEFLinearProgram) -> InfeasibleResult | tuple[SEFLinearProgram
     assert isinstance(result, OptimalResult)
 
     # Output infeasibility or Basis
-    if result.objective_value < -TOL: return InfeasibleResult(result.certificate)
+    if result.objective_value < -TOL:
+        certificate = result.certificate.copy()
+        for row in flipped_rows:certificate[row] *= -1
+        return InfeasibleResult(certificate)
     return _remove_artificials(lp, aux_lp, result.basis)
 
 def _remove_artificials(lp: SEFLinearProgram, aux_lp: SEFLinearProgram, aux_basis: Basis) -> tuple[SEFLinearProgram, Basis]:
 
-    # n = lp.A.shape[1]
-    # aux_lp, basis = canonicalize(aux_lp, aux_basis)
+    n = lp.A.shape[1]
 
-    # while True:
-    #     basis_indices = list(basis.indices)
+    basis_indices = list(aux_basis.indices)
 
-    #     # Artificial variables have indices n, n+1, ...
-    #     artificial_row = next(
-    #         (
-    #             r
-    #             for r, j in enumerate(basis_indices)
-    #             if j >= n
-    #         ),
-    #         None,
-    #     )
+    while True:
+        basis = Basis(tuple(basis_indices))
+        aux_lp, basis = canonicalize(aux_lp, basis)
+        
 
-    #     # No artificial variables remain in the basis.
-    #     if artificial_row is None:
-    #         return lp, basis
+        # get the index of the first artificial variable in the basis
+        artificial_row_index = next(
+            (r for r,j in enumerate(basis_indices) if j >= n),
+            None
+        )
 
-    #     r = artificial_row
+        # If no artificial variable in basis, then we are done
+        if artificial_row_index is None:
+            clean_lp = SEFLinearProgram(
+                c=lp.c.copy(),
+                A=aux_lp.A[:, :n].copy(),
+                b=aux_lp.b.copy(),
+                objective_offset=lp.objective_offset,
+            )
 
-    #     basic = set(basis_indices)
-    #     k = next(
-    #         (
-    #             j
-    #             for j in range(n)
-    #             if j not in basic
-    #             and abs(aux_lp.A[r, j]) > TOL
-    #         ),
-    #         None,
-    #     )
+            return clean_lp, basis
 
-    #     if k is None:
-    #         raise NotImplementedError(
-    #             "Redundant constraint encountered during Phase I cleanup."
-    #         )
+        r = artificial_row_index
+        assert abs(aux_lp.b[r]) <= TOL
 
-    #     # Degenerate pivot:
-    #     # artificial variable leaves, original variable enters.
-    #     basis_indices[r] = k
-    #     basis = Basis(tuple(basis_indices))
+        # get the row of constraints where this artificial variable has the coefficient 1
+        # This corresponds to the index into basis_indices because the i-th row of A will always have a 1 in the place of the ith basic variable
+        row = aux_lp.A[r,:]
+        
+        #  Find any other non-aux variable in that row that has a non-zero coefficient 
+        basic = set(basis_indices)
+        entering = next(
+            (j for j in range(n) if abs(row[j]) > TOL and j not in basic),
+            None
+        )
 
-    #     # Recanonicalize with respect to the new basis.
-    #     aux_lp, basis = canonicalize(aux_lp, basis)
+        # If no original variable can enter, this constraint row is redundant.
+        if entering is None:
+            aux_lp.A = np.delete(aux_lp.A, r, axis=0)
+            aux_lp.b = np.delete(aux_lp.b, r)
+
+            del basis_indices[r]
+            
+        # Otherwise pivot to this
+        else:
+            basis_indices[artificial_row_index] = entering
 
 def _generate_optimal_cert(original_lp: SEFLinearProgram, canonical_lp: SEFLinearProgram, basis: Basis, bfs: np.ndarray) -> OptimalResult:
     indices = list(basis.indices)
