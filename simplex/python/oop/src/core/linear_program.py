@@ -35,42 +35,30 @@ class LinearProgram:
     objective_offset: float = 0.0
 
     def to_sef(self) -> SEFLinearProgram:
-        """
-        Return an equivalent LP in standard equality form.
-
-        The original LinearProgram is not mutated because the result
-        is a different type of mathematical object.
-        """
-
         A = self.A.copy()
         b = self.b.copy()
         c = self.c.copy()
 
         objective_offset = self.objective_offset
+        constraint_senses = list(self.constraint_senses)
 
-        constraint_senses = list(
-            self.constraint_senses
-        )
-
-        # 1. Convert objective to maximization.
+        # 1. Convert objective to maximization
         if self.objective_sense == ObjectiveSense.MIN:
             c *= -1
             objective_offset *= -1
 
-        # 2. Convert every variable to a nonnegative variable.
+        # 2. Convert all variables to nonnegative variables
         new_columns = []
         new_c = []
 
-        # (new_variable_index, upper_bound)
-        upper_bound_constraints = []   
-        
-        for j, (lower_bound, upper_bound) in enumerate(
-            zip(self.lower_bounds, self.upper_bounds)
-        ):
-    
+        # Additional constraints created by finite upper bounds:
+        # (variable_index, upper_bound)
+        upper_bound_constraints = []
+
+        for j, (lower_bound, upper_bound) in enumerate(zip(self.lower_bounds, self.upper_bounds)):
             column = A[:, j]
             coefficient = c[j]
-    
+
             # Case 1:
             # L <= x or L <= x <= U
             #
@@ -80,27 +68,26 @@ class LinearProgram:
             if np.isfinite(lower_bound):
                 b -= column * lower_bound
                 objective_offset += lower_bound * coefficient
-    
+
                 new_c.append(coefficient)
                 new_columns.append(column)
-    
-                #  Add a new constraint (row in A), we ll materialize these later
+
                 if np.isfinite(upper_bound):
-                    upper_bound_constraints.append((len(new_columns) - 1 ,upper_bound - lower_bound))
-    
+                    upper_bound_constraints.append((len(new_columns) - 1, upper_bound - lower_bound))
+
             # Case 2:
             # -inf < x <= U
             #
             # Substitute:
             # x = U - x'
             # x' >= 0
-            elif not np.isfinite(lower_bound) and np.isfinite(upper_bound):
+            elif np.isfinite(upper_bound):
                 b -= column * upper_bound
                 objective_offset += upper_bound * coefficient
-    
+
                 new_c.append(-coefficient)
                 new_columns.append(-column)
-    
+
             # Case 3:
             # x is free
             #
@@ -109,11 +96,10 @@ class LinearProgram:
             else:
                 new_c.append(coefficient)
                 new_c.append(-coefficient)
-    
+
                 new_columns.append(column)
                 new_columns.append(-column)
-                
-    
+
         A = np.column_stack(new_columns)
         c = np.array(new_c, dtype=float)
 
@@ -121,28 +107,31 @@ class LinearProgram:
         for variable_index, bound in upper_bound_constraints:
             row = np.zeros(A.shape[1])
             row[variable_index] = 1
-    
+
             A = np.vstack((A, row))
             b = np.append(b, bound)
-    
+
             constraint_senses.append(ConstraintSense.LE)
-    
+
         # 4. Convert all inequalities to equalities
         #
         # <= : Ax + s = b
         # >= : Ax - s = b
-        #  = : unchangeds([
-        num = sum([sense != ConstraintSense.EQ for sense in constraint_senses])
+        #  = : unchanged
+        num = sum(sense != ConstraintSense.EQ for sense in constraint_senses)
+
         if num > 0:
             slack_columns = np.zeros((A.shape[0], num))
-            
+
             index = 0
             for row, sense in enumerate(constraint_senses):
-                if sense == ConstraintSense.EQ: continue
+                if sense == ConstraintSense.EQ:
+                    continue
+
                 slack_columns[row, index] = 1 if sense == ConstraintSense.LE else -1
                 index += 1
-    
-            A = np.hstack((A,slack_columns))
+
+            A = np.hstack((A, slack_columns))
             c = np.append(c, np.zeros(num))
 
         return SEFLinearProgram(
@@ -152,6 +141,7 @@ class LinearProgram:
             objective_offset=objective_offset,
         )
 
+
 @dataclass
 class SEFLinearProgram:
     c: np.ndarray
@@ -159,11 +149,10 @@ class SEFLinearProgram:
     b: np.ndarray
     objective_offset: float = 0.0
 
-    _flipped_rows: list[int] = field(
-        default_factory=list,
-        init=False,
-        repr=False,
-    )
+    _row_transform: np.ndarray = field(init=False, repr=False)
+
+    def __post_init__(self):
+        self._row_transform = np.eye(self.A.shape[0])
 
     def copy(self) -> SEFLinearProgram:
         result = SEFLinearProgram(
@@ -173,102 +162,88 @@ class SEFLinearProgram:
             objective_offset=self.objective_offset,
         )
 
-        result._flipped_rows = (
-            self._flipped_rows.copy()
-        )
+        result._row_transform = self._row_transform.copy()
 
         return result
 
     def normalize(self) -> Self:
-        """
-        Mutate the LP so that b >= 0.
-
-        Rows with negative RHS are multiplied by -1.
-        Returns self to allow method chaining.
-        """
-
         for i in range(len(self.b)):
             if self.b[i] < 0:
                 self.A[i, :] *= -1
                 self.b[i] *= -1
 
-                self._flipped_rows.append(i)
+                # Apply the same row operation to R
+                self._row_transform[i, :] *= -1
 
         return self
 
-    def reverse_normalization_certificate(
-        self,
-        certificate: np.ndarray,
-    ) -> np.ndarray:
-        """
-        Map a certificate for the normalized constraint system
-        back to the pre-normalized constraint system.
-        """
-        certificate = certificate.copy()
-        certificate[self._flipped_rows] *= -1
-        return certificate
-
     def canonicalize(self, basis: Basis) -> Self:
-        """
-        Mutate this LP into canonical form for the supplied basis.
 
-        Returns self to allow method chaining.
-        """
-
-        indices = list(
-            basis.indices
-        )
-
-        m, _ = self.A.shape
-
-        A_B = self.A[:,indices]
-
-        c_B = self.c[indices]
+        A_B = self.A[:, basis.indices]
+        c_B = self.c[basis.indices]
 
         # A_bar = A_B^-1 A
         # b_bar = A_B^-1 b
-        A_bar = np.linalg.solve(A_B,self.A)
+        A_bar = np.linalg.solve(A_B, self.A)
+        b_bar = np.linalg.solve(A_B, self.b)
 
-        b_bar = np.linalg.solve(A_B,self.b)
+        # Apply exactly the same row operations to R
+        row_transform_bar = np.linalg.solve(A_B, self._row_transform)
 
-        # A_B^T y = c_B
-        y = np.linalg.solve(A_B.T,c_B)
+        # Solve A_B^T y = c_B
+        y = np.linalg.solve(A_B.T, c_B)
 
-        c_bar = (self.c - self.A.T @ y)
+        c_bar = self.c - self.A.T @ y
 
         self.objective_offset += float(self.b @ y)
 
         self.A = A_bar
         self.b = b_bar
         self.c = c_bar
+        self._row_transform = row_transform_bar
 
         return self
 
     def build_auxiliary(self) -> tuple[SEFLinearProgram, Basis]:
-        """
-        Construct the Phase I auxiliary LP.
-
-        self is not mutated because the auxiliary problem is a
-        different LP.
-        """
-
         m, n = self.A.shape
 
-        aux_c = np.concatenate((np.zeros(n),-np.ones(m),))
+        aux_c = np.concatenate((np.zeros(n), -np.ones(m)))
+        aux_A = np.hstack((self.A.copy(), np.eye(m)))
 
-        aux_A = np.hstack((self.A.copy(),np.eye(m)))
+        aux_lp = SEFLinearProgram(
+            c=aux_c,
+            A=aux_A,
+            b=self.b.copy(),
+            objective_offset=0.0,
+        )
 
-        aux_lp = SEFLinearProgram(c=aux_c,A=aux_A,b=self.b.copy(),objective_offset=0.0)
+        # The auxiliary LP starts from the same current row representation
+        aux_lp._row_transform = self._row_transform.copy()
 
-        # The auxiliary constraints correspond to the same
-        # normalized rows.
-        aux_lp._flipped_rows = (self._flipped_rows.copy())
-
-        basis = Basis(tuple(range(n,n + m,)))
+        basis = Basis(range(n, n + m))
 
         return aux_lp, basis
 
     def remove_constraint(self, row: int) -> Self:
+
         self.A = np.delete(self.A, row, axis=0)
         self.b = np.delete(self.b, row)
+        self._row_transform = np.delete(self._row_transform, row, axis=0)
+
         return self
+
+    def adopt_constraint_system(self, other: SEFLinearProgram, number_of_columns: int) -> Self:
+        self.A = other.A[:, :number_of_columns].copy()
+        self.b = other.b.copy()
+        self._row_transform = other._row_transform.copy()
+
+        return self
+
+    def map_certificate_to_original(self, certificate: np.ndarray) -> np.ndarray:
+        # If A_current = R A_original, then
+        #
+        # A_current^T y
+        # = A_original^T R^T y
+        #
+        # so the original certificate is R^T y.
+        return self._row_transform.T @ certificate
