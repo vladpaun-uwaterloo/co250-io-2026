@@ -15,34 +15,6 @@ QLabel {
 }
 
 
-/* Tabs */
-
-QTabWidget::pane {
-    border: 1px solid #343842;
-    border-radius: 8px;
-    background-color: #1d2026;
-    top: -1px;
-}
-
-QTabBar::tab {
-    background-color: #20232a;
-    color: #aeb4bd;
-    border: 1px solid #343842;
-    padding: 9px 18px;
-    min-width: 120px;
-}
-
-QTabBar::tab:selected {
-    background-color: #292d35;
-    color: #ffffff;
-    border-bottom: 2px solid #4f9cf9;
-}
-
-QTabBar::tab:hover {
-    background-color: #262a31;
-}
-
-
 /* Group boxes */
 
 QGroupBox {
@@ -63,11 +35,10 @@ QGroupBox::title {
 }
 
 
-/* Normal inputs */
+/* Inputs */
 
 QLineEdit,
-QSpinBox,
-QComboBox {
+QSpinBox {
     background-color: #1b1e24;
     color: #f1f3f5;
     border: 1px solid #3a3f49;
@@ -77,8 +48,7 @@ QComboBox {
 }
 
 QLineEdit:focus,
-QSpinBox:focus,
-QComboBox:focus {
+QSpinBox:focus {
     border: 1px solid #4f9cf9;
 }
 
@@ -126,13 +96,10 @@ QHeaderView::section {
 QTableWidget QLineEdit {
     background-color: #1b1e24;
     color: #f1f3f5;
-
     border: 1px solid #4f9cf9;
     border-radius: 0px;
-
     padding: 0px 6px;
     min-height: 0px;
-
     selection-background-color: #3685d6;
     selection-color: #ffffff;
 }

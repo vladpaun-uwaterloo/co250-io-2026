@@ -1,11 +1,8 @@
-from .models import LinearProgram, SEFLinearProgram, OptimalResult, UnboundedResult, InfeasibleResult, Basis
-from .transform import to_sef
+from .models import SEFLinearProgram, OptimalResult, UnboundedResult, InfeasibleResult, Basis
 from .simplex import simplex, phase_one, phase_two
 
 
-def solve (lp: LinearProgram | SEFLinearProgram) -> OptimalResult | UnboundedResult | InfeasibleResult:
-    if isinstance(lp, LinearProgram):
-        lp = to_sef(lp)
+def solve (lp: SEFLinearProgram) -> OptimalResult | UnboundedResult | InfeasibleResult:
 
     result = phase_one(lp)
     if isinstance(result, InfeasibleResult): return result

@@ -1,36 +1,6 @@
 from dataclasses import dataclass
-from enum import Enum
 
 import numpy as np
-
-
-class ObjectiveSense(Enum):
-    MAX = "max"
-    MIN = "min"
-
-
-class ConstraintSense(Enum):
-    LE = "<="
-    EQ = "="
-    GE = ">="
-
-
-@dataclass
-class LinearProgram:
-    """An arbitrary linear program."""
-
-    c: np.ndarray
-    A: np.ndarray
-    b: np.ndarray
-
-    objective_sense: ObjectiveSense
-    constraint_senses: list[ConstraintSense]
-
-    lower_bounds: np.ndarray
-    upper_bounds: np.ndarray
-
-    objective_offset: float = 0.0
-
 
 @dataclass
 class SEFLinearProgram:
