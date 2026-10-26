@@ -1,6 +1,6 @@
-from models import LinearProgram, SEFLinearProgram, OptimalResult, UnboundedResult, InfeasibleResult, Basis
-from transform import to_sef
-from simplex import simplex, phase_one, phase_two
+from .models import LinearProgram, SEFLinearProgram, OptimalResult, UnboundedResult, InfeasibleResult, Basis
+from .transform import to_sef
+from .simplex import simplex, phase_one, phase_two
 
 
 def solve (lp: LinearProgram | SEFLinearProgram) -> OptimalResult | UnboundedResult | InfeasibleResult:

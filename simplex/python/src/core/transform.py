@@ -1,6 +1,6 @@
 import numpy as np
 
-from models import (
+from .models import (
     LinearProgram,
     SEFLinearProgram,
     ObjectiveSense,

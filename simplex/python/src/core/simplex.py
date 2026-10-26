@@ -1,6 +1,6 @@
-from models import SEFLinearProgram, OptimalResult, InfeasibleResult, UnboundedResult, Basis
+from .models import SEFLinearProgram, OptimalResult, InfeasibleResult, UnboundedResult, Basis
 import numpy as np
-from transform import build_aux, canonicalize, normalize
+from .transform import build_aux, canonicalize, normalize
 
 TOL = 1e-9
 
