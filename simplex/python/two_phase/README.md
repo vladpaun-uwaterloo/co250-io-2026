@@ -1,6 +1,6 @@
 # Simplex Solver — Python Implementations
 
-This directory contains two Python implementations of the simplex method written while studying linear optimization in CO250.
+This directory contains two Python implementations of the two pahse simplex method written while studying linear optimization in CO250.
 
 ```text
 python/
