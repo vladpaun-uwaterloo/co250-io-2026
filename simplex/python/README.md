@@ -1,10 +1,10 @@
 # Simplex Solver — Python Implementations
 
-This directory contains two Python implementations of the two pahse simplex method written while studying linear optimization in CO250.
+This directory contains two Python implementations of the simplex method written while studying linear optimization in CO250.
 
 ```text
 python/
-├── functional/
+├── simple_implementation/
 └── oop/
 ```
 
@@ -12,7 +12,7 @@ They implement the same underlying simplex algorithm but intentionally have diff
 
 ## Functional implementation
 
-The `functional/` version is the smaller implementation.
+The `simple_implementation/` version is the smaller implementation.
 
 It operates only on linear programs already written in standard equality form:
 
