@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
     QVBoxLayout,
+    QLabel,
     QTabWidget,
     QSplitter,
 )
@@ -20,9 +21,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Simplex Solver Comparison")
-        self.resize(1500, 820)
-        self.setMinimumSize(1100, 700)
+        self.setWindowTitle("Simplex Lab")
+        self.resize(1550, 900)
+        self.setMinimumSize(1250, 700)
 
         self.canonical_solver = CanonicalSimplexSolver()
         self.tableau_solver = TableauSimplexSolver()
@@ -35,23 +36,41 @@ class MainWindow(QMainWindow):
         self.general_input.solve_requested.connect(self._solve)
 
         tabs = QTabWidget()
+        tabs.setObjectName("problemTabs")
+        tabs.setMinimumWidth(620)
+
         tabs.addTab(self.sef_input, "Standard Equality Form")
         tabs.addTab(self.general_input, "General LP")
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setObjectName("mainSplitter")
+
         splitter.addWidget(tabs)
         splitter.addWidget(self.result_view)
 
         splitter.setStretchFactor(0, 2)
         splitter.setStretchFactor(1, 3)
-        splitter.setSizes([600, 900])
+
+        splitter.setSizes([650, 900])
         splitter.setChildrenCollapsible(False)
+
+        title = QLabel("Simplex Lab")
+        title.setObjectName("appTitle")
+
+        subtitle = QLabel(
+            "Build a linear program and compare the canonical and tableau simplex implementations."
+        )
+        subtitle.setObjectName("appSubtitle")
 
         central = QWidget()
 
         layout = QVBoxLayout(central)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.addWidget(splitter)
+        layout.setContentsMargins(20, 16, 20, 20)
+        layout.setSpacing(14)
+
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+        layout.addWidget(splitter, 1)
 
         self.setCentralWidget(central)
 

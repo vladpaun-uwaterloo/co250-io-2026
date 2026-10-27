@@ -12,12 +12,13 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
-    QGroupBox,
     QMessageBox,
-    QSizePolicy,
+    QScrollArea,
 )
 
 from core import SEFLinearProgram
+
+from .components import SectionCard, fit_table_height
 
 
 class SEFInputWidget(QWidget):
@@ -40,10 +41,11 @@ class SEFInputWidget(QWidget):
         self.constraint_table = QTableWidget()
 
         self.offset_input = QLineEdit("0")
-        self.offset_input.setFixedWidth(140)
+        self.offset_input.setFixedWidth(130)
 
-        self.solve_button = QPushButton("Solve with Both")
-        self.solve_button.setFixedSize(150, 40)
+        self.solve_button = QPushButton("Solve & Compare")
+        self.solve_button.setObjectName("primaryButton")
+        self.solve_button.setFixedHeight(42)
 
         self._configure_tables()
         self._build_ui()
@@ -55,70 +57,77 @@ class SEFInputWidget(QWidget):
         self._resize_tables()
 
     def _configure_tables(self):
-        self.objective_table.verticalHeader().setVisible(False)
-        self.objective_table.setFixedHeight(76)
-        self.objective_table.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.objective_table.horizontalHeader().setFixedHeight(32)
+        for table in (self.objective_table, self.constraint_table):
+            table.horizontalHeader().setFixedHeight(34)
+            table.verticalHeader().setDefaultSectionSize(36)
+            table.setAlternatingRowColors(True)
+            table.setShowGrid(True)
 
-        self.constraint_table.setAlternatingRowColors(True)
-        self.constraint_table.verticalHeader().setDefaultSectionSize(34)
-        self.constraint_table.horizontalHeader().setFixedHeight(32)
+        self.objective_table.verticalHeader().setVisible(False)
 
     def _build_ui(self):
+        content = QWidget()
+
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(16, 16, 16, 20)
+        content_layout.setSpacing(14)
+
+        size_card = SectionCard(
+            "Problem size",
+            "Choose the dimensions of the standard equality form problem.",
+        )
+
+        size_row = QHBoxLayout()
+        size_row.setSpacing(12)
+
+        size_row.addWidget(QLabel("Variables"))
+        size_row.addWidget(self.variable_count)
+
+        size_row.addSpacing(16)
+
+        size_row.addWidget(QLabel("Constraints"))
+        size_row.addWidget(self.constraint_count)
+
+        size_row.addStretch()
+
+        size_card.content_layout.addLayout(size_row)
+        content_layout.addWidget(size_card)
+
+        objective_card = SectionCard(
+            "Objective",
+            "Maximize  cᵀx + offset",
+        )
+
+        objective_card.content_layout.addWidget(self.objective_table)
+
+        offset_row = QHBoxLayout()
+        offset_row.addWidget(QLabel("Objective offset"))
+        offset_row.addWidget(self.offset_input)
+        offset_row.addStretch()
+
+        objective_card.content_layout.addLayout(offset_row)
+
+        content_layout.addWidget(objective_card)
+
+        constraints_card = SectionCard(
+            "Constraints",
+            "Ax = b,   x ≥ 0",
+        )
+
+        constraints_card.content_layout.addWidget(self.constraint_table)
+        content_layout.addWidget(constraints_card)
+
+        content_layout.addWidget(self.solve_button)
+        content_layout.addStretch()
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        scroll.setWidget(content)
+
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 18, 18, 18)
-        layout.setSpacing(14)
-
-        size_group = QGroupBox("Problem Size")
-        size_layout = QHBoxLayout(size_group)
-
-        size_layout.addWidget(QLabel("Variables"))
-        size_layout.addWidget(self.variable_count)
-
-        size_layout.addSpacing(20)
-
-        size_layout.addWidget(QLabel("Constraints"))
-        size_layout.addWidget(self.constraint_count)
-
-        size_layout.addStretch()
-
-        layout.addWidget(size_group)
-
-        objective_group = QGroupBox("Objective")
-        objective_layout = QVBoxLayout(objective_group)
-
-        description = QLabel("Maximize  cᵀx + offset")
-        description.setObjectName("secondaryLabel")
-
-        objective_layout.addWidget(description)
-        objective_layout.addWidget(self.objective_table)
-
-        offset_layout = QHBoxLayout()
-        offset_layout.addWidget(QLabel("Offset"))
-        offset_layout.addWidget(self.offset_input)
-        offset_layout.addStretch()
-
-        objective_layout.addLayout(offset_layout)
-
-        layout.addWidget(objective_group)
-
-        constraints_group = QGroupBox("Constraints")
-        constraints_layout = QVBoxLayout(constraints_group)
-
-        description = QLabel("Ax = b")
-        description.setObjectName("secondaryLabel")
-
-        constraints_layout.addWidget(description)
-        constraints_layout.addWidget(self.constraint_table)
-
-        layout.addWidget(constraints_group)
-
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(self.solve_button)
-
-        layout.addLayout(button_layout)
-        layout.addStretch()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(scroll)
 
     def _resize_tables(self):
         old_n = self.objective_table.columnCount()
@@ -156,8 +165,8 @@ class SEFInputWidget(QWidget):
             value = old_objective[j] if j < len(old_objective) else "0"
             self.objective_table.setItem(0, j, QTableWidgetItem(value))
 
-        self.objective_table.setRowHeight(0, 34)
         self.objective_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        fit_table_height(self.objective_table)
 
         self.constraint_table.setRowCount(m)
         self.constraint_table.setColumnCount(n + 1)
@@ -173,7 +182,7 @@ class SEFInputWidget(QWidget):
             self.constraint_table.setItem(i, n, QTableWidgetItem(rhs))
 
         self.constraint_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.constraint_table.setFixedHeight(32 + min(m, 7) * 34 + 8)
+        fit_table_height(self.constraint_table, visible_rows=7)
 
     def get_lp(self) -> SEFLinearProgram:
         n = self.variable_count.value()
@@ -192,13 +201,22 @@ class SEFInputWidget(QWidget):
 
         for i in range(m):
             for j in range(n):
-                A[i, j] = self._read_finite(self.constraint_table, i, j, f"A[{i + 1}, {j + 1}]")
+                A[i, j] = self._read_finite(
+                    self.constraint_table,
+                    i,
+                    j,
+                    f"A[{i + 1}, {j + 1}]",
+                )
 
-            b[i] = self._read_finite(self.constraint_table, i, n, f"b[{i + 1}]")
+            b[i] = self._read_finite(
+                self.constraint_table,
+                i,
+                n,
+                f"b[{i + 1}]",
+            )
 
         try:
             objective_offset = float(self.offset_input.text().strip())
-
         except ValueError:
             raise ValueError("Objective offset must be a number.")
 
@@ -215,7 +233,6 @@ class SEFInputWidget(QWidget):
     def _solve(self):
         try:
             lp = self.get_lp()
-
         except ValueError as exc:
             QMessageBox.warning(
                 self,
@@ -234,7 +251,6 @@ class SEFInputWidget(QWidget):
             return "0"
 
         text = item.text().strip()
-
         return text if text else "0"
 
     @staticmethod
@@ -243,7 +259,6 @@ class SEFInputWidget(QWidget):
 
         try:
             value = float(text)
-
         except ValueError:
             raise ValueError(f"{name} must be a number.")
 
