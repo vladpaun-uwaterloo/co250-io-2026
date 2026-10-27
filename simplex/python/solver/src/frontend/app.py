@@ -1,26 +1,35 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QTabWidget, QSplitter, QMessageBox
+from time import perf_counter
 
-from core.solver import SimplexSolver
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QTabWidget,
+    QSplitter,
+)
+
+from core import CanonicalSimplexSolver, TableauSimplexSolver
 
 from .sef_input import SEFInputWidget
 from .general_input import GeneralLPInputWidget
-from .result_view import ResultView
+from .result_view import SolverComparisonView, SolverRun
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Simplex Solver")
-        self.resize(1250, 760)
-        self.setMinimumSize(950, 650)
+        self.setWindowTitle("Simplex Solver Comparison")
+        self.resize(1500, 820)
+        self.setMinimumSize(1100, 700)
 
-        self.solver = SimplexSolver()
+        self.canonical_solver = CanonicalSimplexSolver()
+        self.tableau_solver = TableauSimplexSolver()
 
         self.sef_input = SEFInputWidget()
         self.general_input = GeneralLPInputWidget()
-        self.result_view = ResultView()
+        self.result_view = SolverComparisonView()
 
         self.sef_input.solve_requested.connect(self._solve)
         self.general_input.solve_requested.connect(self._solve)
@@ -33,31 +42,57 @@ class MainWindow(QMainWindow):
         splitter.addWidget(tabs)
         splitter.addWidget(self.result_view)
 
-        splitter.setStretchFactor(0, 3)
-        splitter.setStretchFactor(1, 2)
-        splitter.setSizes([780, 420])
+        splitter.setStretchFactor(0, 2)
+        splitter.setStretchFactor(1, 3)
+        splitter.setSizes([600, 900])
         splitter.setChildrenCollapsible(False)
-
-        self.result_view.setMinimumWidth(320)
 
         central = QWidget()
 
-        main_layout = QVBoxLayout(central)
-        main_layout.setContentsMargins(12, 12, 12, 12)
-        main_layout.addWidget(splitter)
+        layout = QVBoxLayout(central)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.addWidget(splitter)
 
         self.setCentralWidget(central)
 
     def _solve(self, lp):
+        canonical_run = self._run_solver(
+            "Canonical",
+            self.canonical_solver,
+            lp,
+        )
+
+        tableau_run = self._run_solver(
+            "Tableau",
+            self.tableau_solver,
+            lp,
+        )
+
+        self.result_view.show_runs(
+            canonical_run,
+            tableau_run,
+        )
+
+    @staticmethod
+    def _run_solver(name, solver, lp) -> SolverRun:
+        start = perf_counter()
+
         try:
-            result = self.solver.solve(lp)
+            result = solver.solve(lp)
+            elapsed = perf_counter() - start
+
+            return SolverRun(
+                name=name,
+                result=result,
+                elapsed_seconds=elapsed,
+            )
 
         except Exception as exc:
-            QMessageBox.critical(
-                self,
-                "Solver Error",
-                str(exc),
-            )
-            return
+            elapsed = perf_counter() - start
 
-        self.result_view.show_result(result)
+            return SolverRun(
+                name=name,
+                result=None,
+                elapsed_seconds=elapsed,
+                error=exc,
+            )

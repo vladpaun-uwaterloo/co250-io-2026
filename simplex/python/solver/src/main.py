@@ -9,7 +9,7 @@ from frontend.style import APP_STYLE
 def main():
     app = QApplication(sys.argv)
 
-    app.setApplicationName("Simplex Solver")
+    app.setApplicationName("Simplex Solver Comparison")
     app.setStyle("Fusion")
     app.setStyleSheet(APP_STYLE)
 

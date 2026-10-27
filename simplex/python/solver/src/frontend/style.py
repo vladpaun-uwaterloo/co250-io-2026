@@ -82,6 +82,11 @@ QComboBox:focus {
     border: 1px solid #4f9cf9;
 }
 
+QSpinBox::up-button,
+QSpinBox::down-button {
+    width: 18px;
+}
+
 
 /* Tables */
 
@@ -102,6 +107,7 @@ QTableWidget::item {
 
 QTableWidget::item:selected {
     background-color: #294d73;
+    color: #ffffff;
 }
 
 QHeaderView::section {
@@ -115,7 +121,7 @@ QHeaderView::section {
 }
 
 
-/* Table editors */
+/* Inline table editors */
 
 QTableWidget QLineEdit {
     background-color: #1b1e24;
@@ -124,6 +130,8 @@ QTableWidget QLineEdit {
     border-radius: 0px;
     padding: 0px 6px;
     min-height: 0px;
+    selection-background-color: #3685d6;
+    selection-color: #ffffff;
 }
 
 QTableWidget QComboBox {
@@ -152,6 +160,11 @@ QPushButton:pressed {
     background-color: #2e74bd;
 }
 
+QPushButton:disabled {
+    background-color: #353941;
+    color: #777d86;
+}
+
 
 /* Labels */
 
@@ -165,6 +178,15 @@ QLabel#statusLabel {
     font-weight: 700;
 }
 
+QLabel#comparisonLabel {
+    background-color: #20242b;
+    border: 1px solid #343842;
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: #d5d9df;
+    font-weight: 500;
+}
+
 
 /* Splitter */
 
@@ -176,12 +198,29 @@ QSplitter::handle:horizontal {
     width: 1px;
 }
 
+QSplitter::handle:vertical {
+    height: 1px;
+}
+
+
+/* Scroll areas */
+
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+QScrollArea > QWidget > QWidget {
+    background-color: transparent;
+}
+
 
 /* Scrollbars */
 
 QScrollBar:vertical {
     background: #181a1f;
     width: 10px;
+    margin: 0;
 }
 
 QScrollBar::handle:vertical {
@@ -190,14 +229,33 @@ QScrollBar::handle:vertical {
     min-height: 25px;
 }
 
+QScrollBar::handle:vertical:hover {
+    background: #555c68;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
 QScrollBar:horizontal {
     background: #181a1f;
     height: 10px;
+    margin: 0;
 }
 
 QScrollBar::handle:horizontal {
     background: #444a55;
     border-radius: 5px;
     min-width: 25px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #555c68;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0px;
 }
 """

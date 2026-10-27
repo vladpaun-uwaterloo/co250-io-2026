@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
 )
 
-from core.linear_program import LinearProgram, ObjectiveSense, ConstraintSense
+from core import LinearProgram, ObjectiveSense, ConstraintSense
 
 
 class GeneralLPInputWidget(QWidget):
@@ -48,8 +48,8 @@ class GeneralLPInputWidget(QWidget):
         self.offset_input = QLineEdit("0")
         self.offset_input.setFixedWidth(140)
 
-        self.solve_button = QPushButton("Solve")
-        self.solve_button.setFixedSize(120, 40)
+        self.solve_button = QPushButton("Solve with Both")
+        self.solve_button.setFixedSize(150, 40)
 
         self._configure_tables()
         self._build_ui()
@@ -75,9 +75,9 @@ class GeneralLPInputWidget(QWidget):
         self.bounds_table.setAlternatingRowColors(True)
 
     def _build_ui(self):
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(18, 18, 18, 18)
-        main_layout.setSpacing(14)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(14)
 
         size_group = QGroupBox("Problem Size")
         size_layout = QHBoxLayout(size_group)
@@ -92,34 +92,34 @@ class GeneralLPInputWidget(QWidget):
 
         size_layout.addStretch()
 
-        main_layout.addWidget(size_group)
+        layout.addWidget(size_group)
 
         objective_group = QGroupBox("Objective")
         objective_layout = QVBoxLayout(objective_group)
 
-        objective_top = QHBoxLayout()
+        top_row = QHBoxLayout()
 
-        objective_top.addWidget(QLabel("Sense"))
-        objective_top.addWidget(self.objective_sense)
+        top_row.addWidget(QLabel("Sense"))
+        top_row.addWidget(self.objective_sense)
 
-        objective_top.addSpacing(20)
+        top_row.addSpacing(20)
 
-        objective_top.addWidget(QLabel("Offset"))
-        objective_top.addWidget(self.offset_input)
+        top_row.addWidget(QLabel("Offset"))
+        top_row.addWidget(self.offset_input)
 
-        objective_top.addStretch()
+        top_row.addStretch()
 
-        objective_layout.addLayout(objective_top)
+        objective_layout.addLayout(top_row)
         objective_layout.addWidget(self.objective_table)
 
-        main_layout.addWidget(objective_group)
+        layout.addWidget(objective_group)
 
         constraints_group = QGroupBox("Constraints")
         constraints_layout = QVBoxLayout(constraints_group)
 
         constraints_layout.addWidget(self.constraint_table)
 
-        main_layout.addWidget(constraints_group)
+        layout.addWidget(constraints_group)
 
         bounds_group = QGroupBox("Variable Bounds")
         bounds_layout = QVBoxLayout(bounds_group)
@@ -130,14 +130,14 @@ class GeneralLPInputWidget(QWidget):
         bounds_layout.addWidget(description)
         bounds_layout.addWidget(self.bounds_table)
 
-        main_layout.addWidget(bounds_group)
+        layout.addWidget(bounds_group)
 
         button_layout = QHBoxLayout()
         button_layout.addStretch()
         button_layout.addWidget(self.solve_button)
 
-        main_layout.addLayout(button_layout)
-        main_layout.addStretch()
+        layout.addLayout(button_layout)
+        layout.addStretch()
 
     def _resize_tables(self):
         old_n = self.objective_table.columnCount()
@@ -198,10 +198,7 @@ class GeneralLPInputWidget(QWidget):
 
         self.constraint_table.setRowCount(m)
         self.constraint_table.setColumnCount(n + 2)
-
-        headers = [f"x{j + 1}" for j in range(n)] + ["Sense", "RHS"]
-
-        self.constraint_table.setHorizontalHeaderLabels(headers)
+        self.constraint_table.setHorizontalHeaderLabels([f"x{j + 1}" for j in range(n)] + ["Sense", "RHS"])
         self.constraint_table.setVerticalHeaderLabels([str(i + 1) for i in range(m)])
 
         for i in range(m):
@@ -225,7 +222,6 @@ class GeneralLPInputWidget(QWidget):
 
         self.bounds_table.setRowCount(n)
         self.bounds_table.setColumnCount(2)
-
         self.bounds_table.setHorizontalHeaderLabels(["Lower", "Upper"])
         self.bounds_table.setVerticalHeaderLabels([f"x{j + 1}" for j in range(n)])
 
@@ -278,6 +274,7 @@ class GeneralLPInputWidget(QWidget):
 
         try:
             objective_offset = float(self.offset_input.text().strip())
+
         except ValueError:
             raise ValueError("Objective offset must be a number.")
 
@@ -326,6 +323,7 @@ class GeneralLPInputWidget(QWidget):
 
         try:
             value = float(text)
+
         except ValueError:
             raise ValueError(f"{name} must be a number.")
 
@@ -347,5 +345,6 @@ class GeneralLPInputWidget(QWidget):
 
         try:
             return float(text)
+
         except ValueError:
             raise ValueError(f'Invalid bound "{text}". Use a number, "inf", or "-inf".')
